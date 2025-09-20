@@ -1182,17 +1182,21 @@ const SubscriptionDetail = () => {
         onClose={() => setShowAddPersonModal(false)}
         onAdd={async (person) => {
           try {
+            const updatedPeople = [...subscription.people, { ...person, id: Date.now().toString() }];
+            
+            // Aggiorna lo stato locale
             setSubscription(prev => ({
               ...prev,
-              people: [...prev.people, { ...person, id: Date.now().toString() }]
+              people: updatedPeople
             }));
             
-            // TODO: Salvare i cambiamenti nel repository
-            // await subscriptionsRepo.update(id, { people: subscription.people });
+            // Salva i cambiamenti nel repository
+            await subscriptionsRepo.update(id, { people: updatedPeople });
             
             setShowAddPersonModal(false);
           } catch (error) {
-      // Gestione silenziosa dell'errore
+            console.error('Errore nell\'aggiunta del membro:', error);
+            alert('Errore nell\'aggiunta del membro');
           }
         }}
       />
@@ -2156,7 +2160,7 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
         amount: subscription.amount ? subscription.amount.toString() : ''
       }));
     }
-  }, [subscription, isOpen]);
+  }, [subscription?.people, subscription?.amount, isOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

@@ -397,11 +397,16 @@ const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType, onTo
             </div>
             
             <div className="flex-1 min-w-0">
-              <h3 className={`h4 mb-1 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>{subscription.name}</h3>
+              <div className="flex items-center space-x-2 mb-1">
+                <h3 className={`h4 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>{subscription.name}</h3>
+                <Badge variant="info" size="sm">
+                  {subscription.category}
+                </Badge>
+              </div>
               <div className={`text-lg font-bold mb-1 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-gray-100'}`}>
                 €{subscription.amount}
               </div>
-              <div className={`text-sm text-gray-500 dark:text-gray-400 mb-2 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>
+              <div className={`text-sm text-gray-500 dark:text-gray-400 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>
                 Quota: €{(() => {
                   if (!subscription || !subscription.people || subscription.people.length === 0) {
                     return (subscription.amount || 0).toFixed(2);
@@ -410,11 +415,6 @@ const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType, onTo
                   const individualQuota = (subscription.amount || 0) / totalMembers;
                   return individualQuota.toFixed(2);
                 })()}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="info" size="sm">
-                  {subscription.category}
-                </Badge>
               </div>
             </div>
           </div>
@@ -466,16 +466,7 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
     name: '',
     category: '',
     amount: '',
-    amountType: 'fixed',
-    recurrence: {
-      type: 'monthly',
-      interval: 1,
-      day: 15
-    },
-    startDate: '',
-    numberOfInstallments: null,
-    endDate: null,
-    notes: '',
+    renewalDay: 15,
     status: 'active'
   });
 
@@ -487,16 +478,7 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
         name: '',
         category: '',
         amount: '',
-        amountType: 'fixed',
-        recurrence: {
-          type: 'monthly',
-          interval: 1,
-          day: 15
-        },
-        startDate: '',
-        numberOfInstallments: null,
-        endDate: null,
-        notes: '',
+        renewalDay: 15,
         status: 'active'
       });
     }
@@ -553,18 +535,8 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
           </div>
         </div>
 
-        {/* Data di Inizio e Costo */}
+        {/* Costo e Rinnovo */}
         <div className="card-grid-2">
-          <div>
-            <label className="label">Data di Inizio</label>
-            <input
-              type="date"
-              value={formData.startDate}
-              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              className="form-input h-10 py-0"
-            />
-          </div>
-          
           <div>
             <label className="label">Costo *</label>
             <input
@@ -577,94 +549,21 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
               placeholder="0.00"
             />
           </div>
-        </div>
-
-        {/* Tipo di Importo e Frequenza */}
-        <div className="card-grid-2">
-          <div>
-            <label className="label">Tipo di importo</label>
-            <select
-              value={formData.amountType}
-              onChange={(e) => setFormData({ ...formData, amountType: e.target.value })}
-              className="form-select h-10 py-0"
-            >
-              <option value="fixed">Fisso</option>
-              <option value="variable">Variabile</option>
-            </select>
-          </div>
           
           <div>
-            <label className="label">Frequenza</label>
-            <div className="space-y-2">
-              <select
-                value={formData.recurrence.type}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  recurrence: { ...prev.recurrence, type: e.target.value }
-                }))}
-                className="form-select h-10 py-0"
-              >
-                <option value="monthly">Mensile</option>
-                <option value="annual">Annuale</option>
-                <option value="custom">Personalizzato</option>
-              </select>
-              
-              {formData.recurrence.type === 'custom' && (
-                <div className="flex space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400 self-center">Ogni</span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.recurrence.interval || ''}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      recurrence: { 
-                        ...prev.recurrence, 
-                        interval: parseInt(e.target.value) || 1 
-                      }
-                    }))}
-                    className="form-input w-20 h-10 py-0"
-                    placeholder="1"
-                  />
-                  <select
-                    value="months"
-                    className="form-select w-32 h-10 py-0"
-                    disabled
-                  >
-                    <option value="months">mesi</option>
-                  </select>
-                </div>
-              )}
-            </div>
+            <label className="label">Rinnovo *</label>
+            <select
+              required
+              value={formData.renewalDay || ''}
+              onChange={(e) => setFormData({ ...formData, renewalDay: parseInt(e.target.value) })}
+              className="form-select h-10 py-0"
+            >
+              <option value="">Seleziona giorno</option>
+              {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
+                <option key={day} value={day}>Ogni {day}° del mese</option>
+              ))}
+            </select>
           </div>
-        </div>
-
-        {/* N. Rate */}
-        <div>
-          <label className="label">N. Rate</label>
-          <input
-            type="text"
-            value={formData.numberOfInstallments === null ? '' : formData.numberOfInstallments}
-            onChange={(e) => setFormData(prev => ({ 
-              ...prev, 
-              numberOfInstallments: e.target.value ? parseInt(e.target.value) : null 
-            }))}
-            className="form-input h-10 py-0"
-            placeholder="Inserisci il numero di rate"
-          />
-        </div>
-
-
-        {/* Note - Occupa entrambe le colonne */}
-        <div>
-          <label className="label">Note</label>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="form-input w-full"
-            rows="3"
-            placeholder="Note aggiuntive..."
-          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
