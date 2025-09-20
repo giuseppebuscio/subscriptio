@@ -57,7 +57,11 @@ const Subscriptions = () => {
         ...subscription,
         people: ensureOwnerMember(subscription.people || [])
       }));
-      setSubscriptions(subscriptionsWithOwner);
+      // Ordina sempre alfabeticamente per nome
+      const sortedSubscriptions = subscriptionsWithOwner.sort((a, b) => 
+        a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+      );
+      setSubscriptions(sortedSubscriptions);
     } catch (error) {
       // Gestione silenziosa dell'errore
     } finally {
@@ -74,7 +78,7 @@ const Subscriptions = () => {
       };
       await subscriptionsRepo.create(subscriptionWithOwner);
       setShowAddModal(false);
-      loadSubscriptions();
+      loadSubscriptions(); // Questo già ordina alfabeticamente
     } catch (error) {
       // Gestione silenziosa dell'errore
     }
@@ -84,7 +88,14 @@ const Subscriptions = () => {
     try {
       await subscriptionsRepo.update(id, updates);
       setEditingSubscription(null);
-      loadSubscriptions();
+      loadSubscriptions(); // Questo già ordina alfabeticamente
+      
+      // Refresh delle scadenze se è stata modificata la data di rinnovo
+      if (updates.renewalDay || updates.recurrence) {
+        if (window.refreshExpiringSubscriptions) {
+          window.refreshExpiringSubscriptions();
+        }
+      }
     } catch (error) {
       // Gestione silenziosa dell'errore
     }
@@ -94,10 +105,30 @@ const Subscriptions = () => {
     if (window.confirm('Sei sicuro di voler eliminare questo abbonamento?')) {
       try {
         await subscriptionsRepo.delete(id);
-        loadSubscriptions();
-          } catch (error) {
-      // Gestione silenziosa dell'errore
+        loadSubscriptions(); // Questo già ordina alfabeticamente
+      } catch (error) {
+        // Gestione silenziosa dell'errore
+      }
     }
+  };
+
+  const handleToggleStatus = async (id, newStatus) => {
+    try {
+      await subscriptionsRepo.update(id, { status: newStatus });
+      
+      // Aggiorna solo l'abbonamento specifico nello stato locale mantenendo l'ordinamento
+      setSubscriptions(prev => 
+        prev.map(sub => 
+          sub.id === id ? { ...sub, status: newStatus } : sub
+        ).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+      );
+      
+      // Refresh delle scadenze quando cambia lo status
+      if (window.refreshExpiringSubscriptions) {
+        window.refreshExpiringSubscriptions();
+      }
+    } catch (error) {
+      // Gestione silenziosa dell'errore
     }
   };
 
@@ -204,6 +235,7 @@ const Subscriptions = () => {
                 key={subscription.id}
                 subscription={subscription}
                 onDelete={() => handleDeleteSubscription(subscription.id)}
+                onToggleStatus={handleToggleStatus}
                 translateRecurrenceType={translateRecurrenceType}
               />
             ))}
@@ -221,6 +253,7 @@ const Subscriptions = () => {
                 key={subscription.id}
                 subscription={subscription}
                 onDelete={() => handleDeleteSubscription(subscription.id)}
+                onToggleStatus={handleToggleStatus}
                 translateRecurrenceType={translateRecurrenceType}
               />
             ))}
@@ -270,43 +303,53 @@ const Subscriptions = () => {
 };
 
 // Subscription Card Component (Grid View)
-const SubscriptionCard = ({ subscription, onDelete, translateRecurrenceType }) => {
+const SubscriptionCard = ({ subscription, onDelete, translateRecurrenceType, onToggleStatus }) => {
   const monthlyCost = monthlyEquivalent(subscription);
   const nextPayment = subscription.nextPayment || 'N/A';
   
-  
-
+  const handleToggleStatus = (e) => {
+    e.stopPropagation();
+    onToggleStatus(subscription.id, subscription.status === 'active' ? 'inactive' : 'active');
+  };
 
   return (
     <Card hover className="cursor-pointer" onClick={() => window.location.href = `/subscription/${subscription.id}`}>
       <CardBody>
-        <Badge variant="info" size="sm" className="mb-3">
-          {subscription.category}
-        </Badge>
-        
         <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <h3 className="h4 mb-1">{subscription.name}</h3>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              €{subscription.amount}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {translateRecurrenceType(subscription.recurrence?.type)}
-            </div>
-          </div>
+          <Badge variant="info" size="sm">
+            {subscription.category}
+          </Badge>
+          
+          {/* Toggle Switch for Status */}
+          <button
+            onClick={handleToggleStatus}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
+              subscription.status === 'active' ? 'bg-gray-900' : 'bg-gray-200 dark:bg-gray-700'
+            }`}
+            title={subscription.status === 'active' ? 'Disattiva abbonamento' : 'Attiva abbonamento'}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                subscription.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
         
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Stato:</span>
-            <Badge 
-              variant={subscription.status === 'active' ? 'success' : 'warning'}
-              size="sm"
-            >
-              {subscription.status === 'active' ? 'Attivo' : 'Inattivo'}
-            </Badge>
+        <div className="mb-3">
+          <h3 className={`h4 mb-2 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>{subscription.name}</h3>
+          <div className={`text-2xl font-bold ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-gray-100'}`}>
+            €{subscription.amount}
+          </div>
+          <div className={`text-sm text-gray-500 dark:text-gray-400 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>
+            Quota: €{(() => {
+              if (!subscription || !subscription.people || subscription.people.length === 0) {
+                return (subscription.amount || 0).toFixed(2);
+              }
+              const totalMembers = subscription.people.length;
+              const individualQuota = (subscription.amount || 0) / totalMembers;
+              return individualQuota.toFixed(2);
+            })()}
           </div>
         </div>
         
@@ -336,8 +379,13 @@ const SubscriptionCard = ({ subscription, onDelete, translateRecurrenceType }) =
 };
 
 // Subscription Row Component (List View)
-const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType }) => {
+const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType, onToggleStatus }) => {
   const monthlyCost = monthlyEquivalent(subscription);
+
+  const handleToggleStatus = (e) => {
+    e.stopPropagation();
+    onToggleStatus(subscription.id, subscription.status === 'active' ? 'inactive' : 'active');
+  };
 
   return (
     <Card hover className="cursor-pointer" onClick={() => window.location.href = `/subscription/${subscription.id}`}>
@@ -349,7 +397,20 @@ const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType }) =>
             </div>
             
             <div className="flex-1 min-w-0">
-              <h3 className="h4 mb-1">{subscription.name}</h3>
+              <h3 className={`h4 mb-1 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>{subscription.name}</h3>
+              <div className={`text-lg font-bold mb-1 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-gray-100'}`}>
+                €{subscription.amount}
+              </div>
+              <div className={`text-sm text-gray-500 dark:text-gray-400 mb-2 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>
+                Quota: €{(() => {
+                  if (!subscription || !subscription.people || subscription.people.length === 0) {
+                    return (subscription.amount || 0).toFixed(2);
+                  }
+                  const totalMembers = subscription.people.length;
+                  const individualQuota = (subscription.amount || 0) / totalMembers;
+                  return individualQuota.toFixed(2);
+                })()}
+              </div>
               <div className="flex items-center space-x-2">
                 <Badge variant="info" size="sm">
                   {subscription.category}
@@ -358,22 +419,21 @@ const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType }) =>
             </div>
           </div>
           
-          <div className="text-right mr-4">
-            <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              €{subscription.amount}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Mensile: €{monthlyCost.toFixed(2)}
-            </div>
-          </div>
-          
           <div className="flex items-center space-x-2">
-            <Badge 
-              variant={subscription.status === 'active' ? 'success' : 'warning'}
-              size="sm"
+            {/* Toggle Switch for Status */}
+            <button
+              onClick={handleToggleStatus}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
+                subscription.status === 'active' ? 'bg-gray-900' : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+              title={subscription.status === 'active' ? 'Disattiva abbonamento' : 'Attiva abbonamento'}
             >
-              {subscription.status === 'active' ? 'Attivo' : 'Inattivo'}
-            </Badge>
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  subscription.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
             
             <Button 
               variant="secondary" 

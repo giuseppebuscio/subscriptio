@@ -43,14 +43,14 @@ const SubscriptionDetail = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [showAddPersonModal, setShowAddPersonModal] = useState(false);
+  const [showDeletePaymentModal, setShowDeletePaymentModal] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState(null);
   const [editingPerson, setEditingPerson] = useState(null);
   const [activeTab, setActiveTab] = useState('info');
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [paymentStatus, setPaymentStatus] = useState({});
   const [isSaving, setIsSaving] = useState(false);
-  const [showPaymentReminder, setShowPaymentReminder] = useState(false);
-  const [daysUntilDue, setDaysUntilDue] = useState(0);
   const [payments, setPayments] = useState([]);
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
   const [showEditPaymentModal, setShowEditPaymentModal] = useState(false);
@@ -92,6 +92,8 @@ const SubscriptionDetail = () => {
             periodicity: data.recurrence?.type || data.type || 'monthly',
             startDate: data.startDate || '2024-01-01',
             duration: data.numberOfInstallments ? `${data.numberOfInstallments} rate` : (data.endDate ? data.endDate : '∞'),
+            // Sincronizza renewalDay con recurrence.day
+            renewalDay: data.renewalDay || data.recurrence?.day || 15,
             people: ensureOwnerMember(data.people || data.participants?.map((p, index) => ({
               id: p.personId || `person_${index + 1}`,
               name: p.name || `Persona ${index + 1}`,
@@ -112,8 +114,6 @@ const SubscriptionDetail = () => {
             setPaymentStatus(transformedSubscription.paymentStatus);
           }
           
-          // Controlla se mostrare il popup di notifica scadenza
-          checkPaymentReminder(transformedSubscription);
           
           // Carica i pagamenti per questo abbonamento
           loadPayments();
@@ -175,7 +175,22 @@ const SubscriptionDetail = () => {
   // Funzione per salvare i dati dell'abbonamento
   const saveSubscription = async (dataToSave) => {
     try {
+      // Se è stato modificato renewalDay, aggiorna anche recurrence.day
+      if (dataToSave.renewalDay) {
+        dataToSave.recurrence = {
+          ...subscription.recurrence,
+          day: dataToSave.renewalDay
+        };
+      }
+      
       await subscriptionsRepo.update(id, dataToSave);
+      
+      // Refresh delle scadenze se è stata modificata la data di rinnovo
+      if (dataToSave.renewalDay || dataToSave.recurrence) {
+        if (window.refreshExpiringSubscriptions) {
+          window.refreshExpiringSubscriptions();
+        }
+      }
     } catch (error) {
       // Gestione silenziosa dell'errore
     }
@@ -225,15 +240,19 @@ const SubscriptionDetail = () => {
     }
   };
 
-  // Genera i prossimi pagamenti basandosi sulla data di inizio e frequenza
+  // Genera i prossimi pagamenti basandosi sul giorno di rinnovo configurato
   const generateUpcomingPayments = (subscription) => {
     try {
-      if (!subscription || !subscription.startDate) return [];
+      if (!subscription) return [];
       
-      const startDate = new Date(subscription.startDate);
-      const startDay = startDate.getDate();
       const now = new Date();
+      const currentDay = now.getDate();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
       const upcomingPayments = [];
+      
+      // Usa il giorno configurato nell'abbonamento, con fallback a 15 se non specificato
+      const renewalDay = subscription.recurrence?.day || 15;
       
       // Determina la frequenza corretta
       const frequency = subscription.recurrence?.type || subscription.type || 'monthly';
@@ -245,18 +264,12 @@ const SubscriptionDetail = () => {
         let paymentDate;
         
         if (frequency === 'monthly') {
-          paymentDate = new Date(startDate);
-          paymentDate.setMonth(startDate.getMonth() + i);
+          paymentDate = new Date(currentYear, currentMonth + i, renewalDay);
         } else if (frequency === 'annual') {
-          paymentDate = new Date(startDate);
-          paymentDate.setFullYear(startDate.getFullYear() + i);
+          paymentDate = new Date(currentYear + i, currentMonth, renewalDay);
         } else if (frequency === 'custom' && subscription.recurrence?.interval) {
-          paymentDate = new Date(startDate);
-          paymentDate.setMonth(startDate.getMonth() + (i * subscription.recurrence.interval));
+          paymentDate = new Date(currentYear, currentMonth + (i * subscription.recurrence.interval), renewalDay);
         }
-        
-        // Imposta il giorno corretto
-        paymentDate.setDate(startDay);
         
         // Solo pagamenti futuri
         if (paymentDate > now) {
@@ -284,65 +297,7 @@ const SubscriptionDetail = () => {
     }
   };
 
-  // Controlla se mostrare il popup di notifica scadenza
-  const checkPaymentReminder = (subscription) => {
-    try {
-      if (!subscription.startDate || subscription.status !== 'active') return;
-      
-      const now = new Date();
-      const startDate = new Date(subscription.startDate);
-      const startDay = startDate.getDate();
-      
-      // Se la data di inizio è nel futuro, non mostrare avvisi
-      if (startDate > now) {
-        return;
-      }
-      
-      // Determina la frequenza corretta
-      const frequency = subscription.recurrence?.type || subscription.type || 'monthly';
-      
-      // Calcola la prossima scadenza
-      let nextDueDate;
-      
-      if (frequency === 'monthly') {
-        nextDueDate = new Date(now.getFullYear(), now.getMonth(), startDay);
-        // Se la scadenza di questo mese è già passata, usa il prossimo mese
-        if (nextDueDate <= now) {
-          nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-        }
-      } else if (frequency === 'annual') {
-        nextDueDate = new Date(now.getFullYear(), startDate.getMonth(), startDay);
-        // Se la scadenza di quest'anno è già passata, usa il prossimo anno
-        if (nextDueDate <= now) {
-          nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
-        }
-      } else {
-        // Per frequenze personalizzate, usa la logica mensile come fallback
-        nextDueDate = new Date(now.getFullYear(), now.getMonth(), startDay);
-        if (nextDueDate <= now) {
-          nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-        }
-      }
-      
-      // Calcola quanti giorni mancano alla scadenza
-      const daysUntilDue = Math.ceil((nextDueDate - now) / (1000 * 60 * 60 * 24));
-      
-      // Mostra il popup se mancano 5 giorni o meno
-      if (daysUntilDue <= 5 && daysUntilDue >= 0) {
-        // Salva i giorni rimanenti per mostrarli nel popup
-        setDaysUntilDue(daysUntilDue);
-        setShowPaymentReminder(true);
-      }
-    } catch (error) {
-      // Gestione silenziosa dell'errore
-    }
-  };
 
-  // Gestisce il click su "Vai ai Pagamenti" nel popup
-  const handleGoToPayments = () => {
-    setShowPaymentReminder(false);
-    setActiveTab('payments');
-  };
 
   // Funzione per aggiungere un nuovo pagamento
   const handleAddPayment = async (paymentData) => {
@@ -386,12 +341,20 @@ const SubscriptionDetail = () => {
     }
   };
 
-  // Funzione per eliminare un pagamento
-  const handleDeletePayment = async (paymentId) => {
-    if (window.confirm('Sei sicuro di voler eliminare questo pagamento?')) {
+  // Funzione per aprire il modal di conferma eliminazione pagamento
+  const handleDeletePayment = (paymentId) => {
+    setPaymentToDelete(paymentId);
+    setShowDeletePaymentModal(true);
+  };
+
+  // Funzione per confermare l'eliminazione del pagamento
+  const confirmDeletePayment = async () => {
+    if (paymentToDelete) {
       try {
-        await paymentsRepo.delete(paymentId);
+        await paymentsRepo.delete(paymentToDelete);
         loadPayments(); // Ricarica la lista dei pagamenti
+        setShowDeletePaymentModal(false);
+        setPaymentToDelete(null);
       } catch (error) {
         console.error('Errore nell\'eliminazione del pagamento:', error);
         alert('Errore nell\'eliminazione del pagamento: ' + error.message);
@@ -543,8 +506,6 @@ const SubscriptionDetail = () => {
       setIsEditing(false);
       setEditForm({});
       
-      // Aggiorna l'avviso di scadenza con la nuova data di inizio
-      checkPaymentReminder(updatedSubscription);
       
       // Salva i cambiamenti nel repository
       const finalDataToSave = { ...dataToSave, logo: updatedLogo };
@@ -760,7 +721,7 @@ const SubscriptionDetail = () => {
                       </label>
                       {!isEditing ? (
                         <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                          {subscription.renewalDay ? `Ogni ${subscription.renewalDay} del mese` : 'Non specificato'}
+                          {subscription.renewalDay ? `Ogni ${subscription.renewalDay}° del mese` : 'Non specificato'}
                         </p>
                       ) : (
                         <select
@@ -770,7 +731,7 @@ const SubscriptionDetail = () => {
                         >
                           <option value="">Seleziona giorno</option>
                           {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
-                            <option key={day} value={day}>Ogni {day} del mese</option>
+                            <option key={day} value={day}>Ogni {day}° del mese</option>
                           ))}
                         </select>
                       )}
@@ -1032,11 +993,22 @@ const SubscriptionDetail = () => {
                         </p>
                       </div>
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           const newStatus = subscription.status === 'active' ? 'inactive' : 'active';
                           setSubscription(prev => ({ ...prev, status: newStatus }));
-                          // TODO: Salvare i cambiamenti nel repository
-                          // await subscriptionsRepo.update(id, { status: newStatus });
+                          
+                          // Salva i cambiamenti nel repository
+                          try {
+                            await subscriptionsRepo.update(id, { status: newStatus });
+                            
+                            // Refresh delle scadenze quando cambia lo status
+                            if (window.refreshExpiringSubscriptions) {
+                              window.refreshExpiringSubscriptions();
+                            }
+                          } catch (error) {
+                            // Gestione silenziosa dell'errore
+                            console.error('Errore nell\'aggiornamento dello status:', error);
+                          }
                         }}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 ${
                           subscription.status === 'active' ? 'bg-black' : 'bg-gray-300'
@@ -1225,13 +1197,6 @@ const SubscriptionDetail = () => {
         }}
       />
 
-      {/* Modale Notifica Scadenza Pagamento */}
-      <PaymentReminderModal 
-        isOpen={showPaymentReminder} 
-        onClose={() => setShowPaymentReminder(false)} 
-        onGoToPayments={handleGoToPayments}
-        daysUntilDue={daysUntilDue}
-      />
 
        {/* Modale Aggiungi Pagamento */}
        <AddPaymentModal 
@@ -1266,6 +1231,48 @@ const SubscriptionDetail = () => {
          shareLink={shareLink}
          onCopyLink={handleCopyLink}
       />
+
+      {/* Modal di conferma eliminazione pagamento */}
+      <Modal isOpen={showDeletePaymentModal} onClose={() => setShowDeletePaymentModal(false)}>
+        <div className=" rounded-xl">
+          <div className="flex items-center mb-4">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mr-4">
+              <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Elimina pagamento
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Questa azione non può essere annullata
+              </p>
+            </div>
+          </div>
+          
+          <p className="text-gray-700 dark:text-gray-300 mb-6">
+            Sei sicuro di voler eliminare questo pagamento? I dati verranno rimossi permanentemente.
+          </p>
+          
+          <div className="flex justify-end space-x-3">
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setShowDeletePaymentModal(false)}
+            >
+              Annulla
+            </Button>
+            <Button 
+              variant="secondary"
+              size="sm"
+              onClick={confirmDeletePayment}
+              className="bg-black hover:bg-gray-800 text-white border-black hover:border-gray-800"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Elimina
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </motion.div>
   );
 };
@@ -1695,14 +1702,18 @@ const PaymentHistory = ({ payments }) => {
 );
 };
 
-// Genera i prossimi pagamenti basandosi sulla data di inizio e frequenza
+// Genera i prossimi pagamenti basandosi sul giorno di rinnovo configurato
 const generateUpcomingPayments = () => {
-  if (!subscription.startDate) return [];
+  if (!subscription) return [];
   
-  const startDate = new Date(subscription.startDate);
-  const startDay = startDate.getDate();
   const now = new Date();
+  const currentDay = now.getDate();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
   const upcomingPayments = [];
+  
+  // Usa il giorno configurato nell'abbonamento, con fallback a 15 se non specificato
+  const renewalDay = subscription.recurrence?.day || 15;
   
   // Determina la frequenza corretta
   const frequency = subscription.recurrence?.type || subscription.type || 'monthly';
@@ -1714,18 +1725,12 @@ const generateUpcomingPayments = () => {
     let paymentDate;
     
     if (frequency === 'monthly') {
-      paymentDate = new Date(startDate);
-      paymentDate.setMonth(startDate.getMonth() + i);
+      paymentDate = new Date(currentYear, currentMonth + i, renewalDay);
     } else if (frequency === 'annual') {
-      paymentDate = new Date(startDate);
-      paymentDate.setFullYear(startDate.getFullYear() + i);
+      paymentDate = new Date(currentYear + i, currentMonth, renewalDay);
     } else if (frequency === 'custom' && subscription.recurrence?.interval) {
-      paymentDate = new Date(startDate);
-      paymentDate.setMonth(startDate.getMonth() + (i * subscription.recurrence.interval));
+      paymentDate = new Date(currentYear, currentMonth + (i * subscription.recurrence.interval), renewalDay);
     }
-    
-    // Imposta il giorno corretto
-    paymentDate.setDate(startDay);
     
     // Solo pagamenti futuri
     if (paymentDate > now) {
@@ -1858,32 +1863,6 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, subscriptionName 
   </Modal>
 );
 
-// Modale Notifica Scadenza Pagamento
-const PaymentReminderModal = ({ isOpen, onClose, onGoToPayments, daysUntilDue }) => {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <div className="text-center p-6">
-        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="h-8 w-8 text-gray-600 dark:text-gray-400" />
-        </div>
-        
-        <h3 className="h3 mb-2">Abbonamento in Scadenza</h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          L'abbonamento è in scadenza tra <strong>{daysUntilDue} {daysUntilDue === 1 ? 'giorno' : 'giorni'}</strong>. Ricordati di pagarlo!
-        </p>
-        
-        <div className="flex space-x-3 justify-center">
-          <Button variant="secondary" onClick={onClose}>
-            Chiudi
-          </Button>
-          <Button variant="primary" onClick={onGoToPayments}>
-            Vai ai Pagamenti
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
 
 // Modale Selezione Icona
 const IconPickerModal = ({ isOpen, onClose, onSelect }) => {
@@ -1944,30 +1923,32 @@ const AddPersonModal = ({ isOpen, onClose, onAdd }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <form onSubmit={handleSubmit} className="p-4">
-        <h3 className="h3 mb-3">Aggiungi Persona</h3>
-        
-        <div className="space-y-3">
-          <div>
-            <label className="label">Nome</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="form-input"
-              placeholder="Nome della persona"
-              required
-            />
+      <form onSubmit={handleSubmit} className="rounded-xl">
+        <div className="">
+          <h3 className="h3 mb-3">Aggiungi Persona</h3>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="label">Nome</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="form-input"
+                placeholder="Nome della persona"
+                required
+              />
+            </div>
           </div>
-        </div>
-        
-        <div className="flex space-x-3 mt-4">
-          <Button variant="secondary" onClick={onClose} type="button" size="sm">
-            Annulla
-          </Button>
-          <Button type="submit" size="sm">
-            Aggiungi
-          </Button>
+          
+          <div className="flex justify-end space-x-3 mt-4">
+            <Button variant="secondary" onClick={onClose} type="button" size="sm">
+              Annulla
+            </Button>
+            <Button type="submit" size="sm">
+              Aggiungi
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

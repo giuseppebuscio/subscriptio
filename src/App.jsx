@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import Modal from './components/Modal';
 import Button from './components/Button';
+import ExpiringSubscriptionsModal from './components/ExpiringSubscriptionsModal';
 import { 
   CreditCard, 
   AlertTriangle
 } from 'lucide-react';
 import { paymentsRepo } from './repositories/paymentsRepo';
-import { upcomingDuePayments } from './utils/finance';
+import subscriptionsRepo from './repositories/subscriptionsRepo';
+import { upcomingDuePayments, getExpiringSubscriptions } from './utils/finance';
 import { formatDate } from './utils/dates';
 
 
@@ -25,10 +27,14 @@ import Help from './pages/Help';
 import SubscriptionDetail from './pages/SubscriptionDetail';
 
 function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [theme, setTheme] = useState('light');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showUpcomingPayments, setShowUpcomingPayments] = useState(false);
   const [upcomingPayments, setUpcomingPayments] = useState([]);
+  const [showExpiringSubscriptions, setShowExpiringSubscriptions] = useState(false);
+  const [expiringSubscriptions, setExpiringSubscriptions] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -37,11 +43,15 @@ function App() {
     setTheme(savedTheme);
     document.documentElement.classList.toggle('dark', savedTheme === 'dark');
     
-    // Check for upcoming payments on app load
+    // Check for upcoming payments and expiring subscriptions on app load
     checkUpcomingPayments();
-
-
+    checkExpiringSubscriptions();
   }, []);
+
+  // Controlla le scadenze quando cambia la route
+  useEffect(() => {
+    checkExpiringSubscriptions();
+  }, [location.pathname]);
 
   const checkUpcomingPayments = async () => {
     try {
@@ -63,6 +73,44 @@ function App() {
         }));
         
         setNotifications(prev => [...prev, ...newNotifications]);
+      }
+    } catch (error) {
+      // Gestione silenziosa dell'errore
+    }
+  };
+
+  const checkExpiringSubscriptions = async () => {
+    try {
+      const subscriptions = await subscriptionsRepo.getActive();
+      const expiring = getExpiringSubscriptions(subscriptions, 7); // Next 7 days
+      
+      if (expiring.length > 0) {
+        setExpiringSubscriptions(expiring);
+        
+        // Mostra il modal solo se siamo nella dashboard
+        const isDashboard = location.pathname === '/';
+        
+        if (isDashboard) {
+          setShowExpiringSubscriptions(true);
+        } else {
+          setShowExpiringSubscriptions(false);
+        }
+        
+        // Add notifications for expiring subscriptions
+        const newNotifications = expiring.map(subscription => ({
+          id: `subscription-${subscription.id}`,
+          type: 'subscription_expiring',
+          title: 'Abbonamento in Scadenza',
+          message: `${subscription.name} si rinnova tra ${subscription.daysUntilRenewal} giorni`,
+          timestamp: new Date().toISOString(),
+          read: false
+        }));
+        
+        setNotifications(prev => [...prev, ...newNotifications]);
+      } else {
+        // Se non ci sono abbonamenti in scadenza, nascondi il modal
+        setShowExpiringSubscriptions(false);
+        setExpiringSubscriptions([]);
       }
     } catch (error) {
       // Gestione silenziosa dell'errore
@@ -91,10 +139,27 @@ function App() {
       case 'payment_due':
         setShowUpcomingPayments(true);
         break;
+      case 'subscription_expiring':
+        setShowExpiringSubscriptions(true);
+        break;
       default:
         break;
     }
   };
+
+  const handleViewSubscription = (subscriptionId) => {
+    navigate(`/subscription/${subscriptionId}`);
+    // Il modal si nasconderà automaticamente quando cambia la route
+  };
+
+  // Esponi la funzione globalmente per permettere il refresh delle scadenze
+  useEffect(() => {
+    window.refreshExpiringSubscriptions = checkExpiringSubscriptions;
+    
+    return () => {
+      delete window.refreshExpiringSubscriptions;
+    };
+  }, []);
 
   const handleMarkAsPaid = async (paymentId) => {
     try {
@@ -229,6 +294,14 @@ function App() {
             </Modal>
           )}
         </AnimatePresence>
+
+        {/* Expiring Subscriptions Modal */}
+        <ExpiringSubscriptionsModal
+          isOpen={showExpiringSubscriptions}
+          onClose={() => setShowExpiringSubscriptions(false)}
+          expiringSubscriptions={expiringSubscriptions}
+          onViewSubscription={handleViewSubscription}
+        />
       </div>
   );
 }

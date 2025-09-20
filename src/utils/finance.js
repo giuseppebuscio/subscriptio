@@ -288,3 +288,54 @@ export const calculateCategoryBreakdown = (subscriptions) => {
   return Object.values(breakdown)
     .sort((a, b) => b.monthlyEquivalent - a.monthlyEquivalent);
 };
+
+/**
+ * Get subscriptions that are expiring soon based on renewal day
+ * @param {Array} subscriptions - Array of Subscription objects
+ * @param {number} daysThreshold - Number of days to check ahead (default: 7)
+ * @returns {Array} Array of expiring subscriptions
+ */
+export const getExpiringSubscriptions = (subscriptions, daysThreshold = 7) => {
+  if (!subscriptions || !Array.isArray(subscriptions)) return [];
+  
+  const today = new Date();
+  const thresholdDate = new Date(today);
+  thresholdDate.setDate(today.getDate() + daysThreshold);
+  
+  const expiringSubscriptions = [];
+  
+  subscriptions.forEach(subscription => {
+    // Skip inactive subscriptions
+    if (subscription.status !== 'active') return;
+    
+    // Skip subscriptions without renewal day info
+    const renewalDay = subscription.renewalDay || subscription.recurrence?.day;
+    if (!renewalDay) return;
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // Calculate next renewal date
+    let nextRenewalDate = new Date(currentYear, currentMonth, renewalDay);
+    
+    // If the renewal day has already passed this month, check next month
+    if (renewalDay < currentDay) {
+      nextRenewalDate = new Date(currentYear, currentMonth + 1, renewalDay);
+    }
+    
+    // Check if the next renewal is within the threshold
+    if (nextRenewalDate >= today && nextRenewalDate <= thresholdDate) {
+      const daysUntilRenewal = Math.ceil((nextRenewalDate - today) / (1000 * 60 * 60 * 24));
+      
+      expiringSubscriptions.push({
+        ...subscription,
+        nextRenewalDate: nextRenewalDate.toISOString(),
+        daysUntilRenewal,
+        isExpiring: true
+      });
+    }
+  });
+  
+  // Sort by days until renewal (closest first)
+  return expiringSubscriptions.sort((a, b) => a.daysUntilRenewal - b.daysUntilRenewal);
+};
