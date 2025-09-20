@@ -2187,7 +2187,7 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <form onSubmit={handleSubmit} className="p-6">
+      <form onSubmit={handleSubmit} className="">
         <h3 className="h3 mb-4">Aggiungi pagamento</h3>
         
         <div className="space-y-4">
@@ -2264,11 +2264,11 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
           </div>
         </div>
         
-        <div className="flex space-x-3 mt-6">
-          <Button variant="secondary" onClick={onClose} type="button">
+        <div className="flex justify-end space-x-3 mt-4">
+          <Button variant="secondary" onClick={onClose} type="button" size="sm">
             Annulla
           </Button>
-          <Button type="submit">
+          <Button type="submit" size="sm">
             Salva
           </Button>
         </div>
@@ -2331,7 +2331,7 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <form onSubmit={handleSubmit} className="p-6">
+      <form onSubmit={handleSubmit} className="">
         <h3 className="h3 mb-4">Modifica pagamento</h3>
         
         <div className="space-y-4">
@@ -2415,11 +2415,11 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
           </div>
         </div>
         
-        <div className="flex space-x-3 mt-6">
-          <Button variant="secondary" onClick={onClose} type="button">
+        <div className="flex justify-end space-x-3 mt-4">
+          <Button variant="secondary" onClick={onClose} type="button" size="sm">
             Annulla
           </Button>
-          <Button type="submit">
+          <Button type="submit" size="sm">
             Salva modifiche
           </Button>
         </div>
