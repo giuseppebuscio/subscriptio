@@ -7,6 +7,7 @@ import {
   Image, 
   Plus, 
   Users, 
+  User,
   Calendar,
   CreditCard,
   CheckCircle,
@@ -32,6 +33,7 @@ import subscriptionsRepo from '../repositories/subscriptionsRepo';
 import { paymentsRepo } from '../repositories/paymentsRepo';
 import { findBestLogo, getAvailableLogos, getDefaultLogo } from '../utils/logoMatcher';
 import { translateCategory } from '../utils/categories';
+import { ensureOwnerMember, isOwner } from '../utils/ownerMember';
 
 const SubscriptionDetail = () => {
   const { id } = useParams();
@@ -90,13 +92,13 @@ const SubscriptionDetail = () => {
             periodicity: data.recurrence?.type || data.type || 'monthly',
             startDate: data.startDate || '2024-01-01',
             duration: data.numberOfInstallments ? `${data.numberOfInstallments} rate` : (data.endDate ? data.endDate : '∞'),
-            people: data.people || data.participants?.map((p, index) => ({
+            people: ensureOwnerMember(data.people || data.participants?.map((p, index) => ({
               id: p.personId || `person_${index + 1}`,
               name: p.name || `Persona ${index + 1}`,
               quota: data.amount * (p.value / 100),
               quotaType: p.shareType === 'percent' ? 'percentage' : 'fixed',
               paymentStatus: p.paymentStatus || 'pending'
-            })) || [],
+            })) || []),
             payments: data.payments || [],
             upcomingPayments: data.upcomingPayments || [],
             paymentStatus: data.paymentStatus || {}
@@ -129,10 +131,10 @@ const SubscriptionDetail = () => {
             duration: '∞',
                category: 'Intrattenimento',
             status: 'active',
-            people: [
+            people: ensureOwnerMember([
               { id: '1', name: 'Giuseppe', quota: 8.99, quotaType: 'fixed', paymentStatus: 'paid' },
               { id: '2', name: 'Marco', quota: 9.00, quotaType: 'fixed', paymentStatus: 'pending' }
-            ],
+            ]),
             payments: [],
             upcomingPayments: [],
             paymentStatus: {}
@@ -153,10 +155,10 @@ const SubscriptionDetail = () => {
           duration: '∞',
           category: 'Intrattenimento',
           status: 'active',
-          people: [
+          people: ensureOwnerMember([
             { id: '1', name: 'Giuseppe', quota: 8.99, quotaType: 'fixed', paymentStatus: 'paid' },
             { id: '2', name: 'Marco', quota: 9.00, quotaType: 'fixed', paymentStatus: 'pending' }
-          ],
+          ]),
           payments: [],
           upcomingPayments: []
         };
@@ -501,7 +503,7 @@ const SubscriptionDetail = () => {
     setEditForm({
       name: subscription.name || '',
       notes: subscription.notes || '',
-      startDate: subscription.startDate || '',
+      renewalDay: subscription.renewalDay || '',
       amount: subscription.amount || ''
     });
     setIsEditing(true);
@@ -520,7 +522,7 @@ const SubscriptionDetail = () => {
       const dataToSave = {
         name: editForm.name,
         notes: editForm.notes,
-        startDate: editForm.startDate,
+        renewalDay: editForm.renewalDay,
         amount: parseFloat(editForm.amount),
         paymentStatus: paymentStatus
       };
@@ -723,12 +725,12 @@ const SubscriptionDetail = () => {
                 <CardBody>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Nome Abbonamento */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <label className="text-sm text-gray-500 dark:text-gray-400">
                         Nome abbonamento
                       </label>
                       {!isEditing ? (
-                        <p className="text-lg text-gray-900 dark:text-gray-100">
+                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                           {subscription.name || 'Non specificato'}
                         </p>
                       ) : (
@@ -745,58 +747,42 @@ const SubscriptionDetail = () => {
                               setSubscription(prev => ({ ...prev, logo: newLogo }));
                             }
                           }}
-                          className="form-input w-full h-10 py-0"
+                          className="form-input w-full h-10 py-0 mt-2"
                           placeholder="Nome dell'abbonamento"
                         />
                       )}
                     </div>
                     
-                    {/* Note */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Note
-                      </label>
-                      {!isEditing ? (
-                        <p className="text-lg text-gray-900 dark:text-gray-100">
-                          {subscription.notes || 'Nessuna nota'}
-                        </p>
-                      ) : (
-                        <textarea
-                          value={editForm.notes || ''}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
-                          className="form-input w-full h-10 py-0 resize-none flex items-center"
-                          placeholder="Aggiungi note..."
-                          rows="1"
-                          style={{ lineHeight: '2.5rem' }}
-                        />
-                      )}
-                    </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Data di Inizio
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <label className="text-sm text-gray-500 dark:text-gray-400">
+                        Rinnovo abbonamento
                       </label>
                       {!isEditing ? (
-                        <p className="text-lg text-gray-900 dark:text-gray-100">
-                          {subscription.startDate ? formatDate(subscription.startDate) : 'Non specificata'}
+                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                          {subscription.renewalDay ? `Ogni ${subscription.renewalDay} del mese` : 'Non specificato'}
                         </p>
                       ) : (
-                        <input
-                          type="date"
-                          value={editForm.startDate}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, startDate: e.target.value }))}
-                          className="form-input w-full h-10 py-0"
-                        />
+                        <select
+                          value={editForm.renewalDay || ''}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, renewalDay: parseInt(e.target.value) }))}
+                          className="form-select w-full h-10 py-0 mt-2"
+                        >
+                          <option value="">Seleziona giorno</option>
+                          {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day}>Ogni {day} del mese</option>
+                          ))}
+                        </select>
                       )}
                     </div>
                     
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Costo
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <label className="text-sm text-gray-500 dark:text-gray-400">
+                        Costo dell'abbonamento
                       </label>
                       {!isEditing ? (
                         <div className="flex items-end space-x-2">
-                          <p className="text-lg text-gray-900 dark:text-gray-100">
+                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                             €{subscription.amount}
                           </p>
                         </div>
@@ -806,7 +792,7 @@ const SubscriptionDetail = () => {
                           step="0.01"
                           value={editForm.amount}
                           onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))}
-                          className="form-input w-full h-10 py-0"
+                          className="form-input w-full h-10 py-0 mt-2"
                           placeholder="0.00"
                         />
                       )}
@@ -821,46 +807,107 @@ const SubscriptionDetail = () => {
                 </CardBody>
               </Card>
 
-              {/* Sezione Membri */}
-              <Card>
-                <CardHeader>
-                  <h3 className="h3">Membri</h3>
-                  <p className="muted">Gestisci i membri che condividono questo abbonamento</p>
-                </CardHeader>
-                <CardBody>
-                  {subscription.people && subscription.people.length > 0 ? (
-                    <div className="space-y-3">
-                      {subscription.people.map((person, index) => (
-                        <div key={person.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                              <Users className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                            </div>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {person.name}
-                            </span>
-                          </div>
-                          <Badge variant="secondary" size="sm">
-                            Membro
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                      <h4 className="h4 mb-2">Sei da solo</h4>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        Spostati nella sezione membri per aggiungere altri membri
-                      </p>
-                      <Button size="sm" onClick={() => setActiveTab('quotes')}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Aggiungi
+              {/* Sezioni Membri e Pagamenti in due colonne */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Sezione Membri */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="h3">Membri</h3>
+                        <p className="muted">Gestisci i membri che condividono questo abbonamento</p>
+                      </div>
+                      <Button onClick={() => setActiveTab('quotes')} size="sm">
+                        Gestisci
                       </Button>
                     </div>
-                  )}
-                </CardBody>
-              </Card>
+                  </CardHeader>
+                  <CardBody>
+                    {subscription.people && subscription.people.length > 0 ? (
+                      <div className="space-y-3">
+                        {subscription.people.map((person, index) => (
+                          <div key={person.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                                <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                  {person.name}
+                                </span>
+                                {isOwner(person) && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Proprietario
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <Badge 
+                              variant="secondary" 
+                              size="sm"
+                            >
+                              {isOwner(person) ? 'Proprietario' : 'Membro'}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                        <h4 className="h4 mb-2">Sei da solo</h4>
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">
+                          Spostati nella sezione membri per aggiungere altri membri
+                        </p>
+                        <Button size="sm" onClick={() => setActiveTab('quotes')}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Aggiungi
+                        </Button>
+                      </div>
+                    )}
+                  </CardBody>
+                </Card>
+
+                {/* Sezione Pagamenti */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="h3">Pagamenti</h3>
+                        <p className="muted">Riepilogo dei pagamenti effettuati</p>
+                      </div>
+                      <Button onClick={() => setActiveTab('payments')} size="sm">
+                        Gestisci
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardBody>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Numero pagamenti</p>
+                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            {payments.length}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Quota pagata</p>
+                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            €{(() => {
+                              if (!subscription || !subscription.people || subscription.people.length === 0) {
+                                return payments.reduce((total, payment) => total + (payment.amount || 0), 0).toFixed(2);
+                              }
+                              const totalMembers = subscription.people.length;
+                              const totalPaid = payments.reduce((total, payment) => total + (payment.amount || 0), 0);
+                              const individualQuota = totalPaid / totalMembers;
+                              return individualQuota.toFixed(2);
+                            })()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
+              </div>
 
                     </div>
           )}
@@ -874,11 +921,20 @@ const SubscriptionDetail = () => {
                     <div>
                       <h3 className="h3">Membri attuali</h3>
                       <p className="muted">Persone che partecipano a questo abbonamento</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {subscription.people ? subscription.people.length : 0} membri
+                      </p>
                     </div>
-                    <Button onClick={handleGenerateShareLink} disabled={isGeneratingLink} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      {isGeneratingLink ? 'Generando...' : 'Invita'}
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button onClick={() => setShowAddPersonModal(true)} variant="secondary" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Inserisci manualmente
+                      </Button>
+                      <Button onClick={handleGenerateShareLink} disabled={isGeneratingLink} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        {isGeneratingLink ? 'Generando...' : 'Invita'}
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardBody>
@@ -887,28 +943,36 @@ const SubscriptionDetail = () => {
                       {subscription.people.map((person, index) => (
                         <div key={person.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                              <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                              <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                             </div>
                             <div>
                               <span className="font-medium text-gray-900 dark:text-gray-100">
                                 {person.name}
                               </span>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {index === 0 ? 'Proprietario' : 'Membro'}
-                      </p>
-                    </div>
-                  </div>
-                          {index > 0 && (
-                            <Button 
+                                {isOwner(person) ? 'Proprietario' : 'Membro'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge 
                               variant="secondary" 
-                              size="sm" 
-                              onClick={() => handleRemoveMember(person.id)}
-                              className="text-red-600 hover:text-red-700"
+                              size="sm"
                             >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
+                              {isOwner(person) ? 'Proprietario' : 'Membro'}
+                            </Badge>
+                            {!isOwner(person) && (
+                              <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                onClick={() => handleRemoveMember(person.id)}
+                                className="text-red-600 hover:text-red-700 w-8 h-8 p-0 flex items-center justify-center"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1862,29 +1926,28 @@ const IconPickerModal = ({ isOpen, onClose, onSelect }) => {
 // Modale Aggiungi Persona
 const AddPersonModal = ({ isOpen, onClose, onAdd }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    quota: '',
-    quotaType: 'fixed'
+    name: ''
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (formData.name && formData.quota) {
+    if (formData.name) {
       onAdd({
         ...formData,
-        quota: parseFloat(formData.quota),
+        quota: 0,
+        quotaType: 'fixed',
         paymentStatus: 'pending'
       });
-      setFormData({ name: '', quota: '', quotaType: 'fixed' });
+      setFormData({ name: '' });
     }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <form onSubmit={handleSubmit} className="p-6">
-        <h3 className="h3 mb-4">Aggiungi Persona</h3>
+      <form onSubmit={handleSubmit} className="p-4">
+        <h3 className="h3 mb-3">Aggiungi Persona</h3>
         
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
             <label className="label">Nome</label>
             <input
@@ -1896,38 +1959,13 @@ const AddPersonModal = ({ isOpen, onClose, onAdd }) => {
               required
             />
           </div>
-          
-          <div>
-            <label className="label">Quota</label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.quota}
-              onChange={(e) => setFormData({ ...formData, quota: e.target.value })}
-              className="form-input"
-              placeholder="0.00"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="label">Tipo Quota</label>
-            <select
-              value={formData.quotaType}
-              onChange={(e) => setFormData({ ...formData, quotaType: e.target.value })}
-              className="form-select"
-            >
-              <option value="fixed">Fissa</option>
-              <option value="percentage">Percentuale</option>
-            </select>
-          </div>
         </div>
         
-        <div className="flex space-x-3 mt-6">
-          <Button variant="secondary" onClick={onClose} type="button">
+        <div className="flex space-x-3 mt-4">
+          <Button variant="secondary" onClick={onClose} type="button" size="sm">
             Annulla
           </Button>
-          <Button type="submit">
+          <Button type="submit" size="sm">
             Aggiungi
           </Button>
         </div>
@@ -1939,8 +1977,8 @@ const AddPersonModal = ({ isOpen, onClose, onAdd }) => {
 // Funzione helper per formattare le date
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('it-IT', {
-    day: '2-digit',
-    month: '2-digit',
+    day: 'numeric',
+    month: 'long',
     year: 'numeric'
   });
 };
@@ -1971,6 +2009,22 @@ const AllPaymentsSection = ({ payments, loading, onAddPayment, onEditPayment, on
           <div>
             <h3 className="h3">Tutti i pagamenti</h3>
             <p className="muted">Gestisci tutti i pagamenti per questo abbonamento</p>
+            <div className="flex space-x-4 mt-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Numero pagamenti: {sortedPayments.length}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Quota pagata: €{(() => {
+                  if (!subscription || !subscription.people || subscription.people.length === 0) {
+                    return sortedPayments.reduce((total, payment) => total + (payment.amount || 0), 0).toFixed(2);
+                  }
+                  const totalMembers = subscription.people.length;
+                  const totalPaid = sortedPayments.reduce((total, payment) => total + (payment.amount || 0), 0);
+                  const individualQuota = totalPaid / totalMembers;
+                  return individualQuota.toFixed(2);
+                })()}
+              </p>
+            </div>
           </div>
           <Button size="sm" onClick={onAddPayment}>
             <Plus className="h-4 w-4 mr-2" />
@@ -2008,14 +2062,51 @@ const AllPaymentsSection = ({ payments, loading, onAddPayment, onEditPayment, on
                        </div>
                        <div>
                          <p className="font-medium text-gray-900 dark:text-gray-100">
-                           €{(payment.amount || 0).toFixed(2)}
+                           Hai pagato: €{(() => {
+                             if (!subscription || !subscription.people || subscription.people.length === 0) {
+                               return (payment.amount || 0).toFixed(2);
+                             }
+                             const totalMembers = subscription.people.length;
+                             const individualQuota = (payment.amount || 0) / totalMembers;
+                             return individualQuota.toFixed(2);
+                           })()}
                          </p>
                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                           {payment.date ? formatDate(payment.date) : 'Data non disponibile'}
+                           Costo abbonamento: €{(payment.amount || 0).toFixed(2)}
                          </p>
                          {payment.people && payment.people.length > 0 && (
-                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                             Persone coinvolte: {payment.people.join(', ')}
+                           <p className={`text-xs ${
+                             (() => {
+                               if (!subscription || !subscription.people) {
+                                 return 'text-gray-500 dark:text-gray-400';
+                               }
+                               
+                               const allMemberNames = subscription.people.map(person => person.name);
+                               const paidMembers = payment.people || [];
+                               const unpaidMembers = allMemberNames.filter(name => !paidMembers.includes(name));
+                               
+                               return unpaidMembers.length === 0 
+                                 ? 'text-gray-500 dark:text-gray-400' 
+                                 : 'text-red-400 dark:text-red-300';
+                             })()
+                           }`}>
+                             {(() => {
+                               if (!subscription || !subscription.people) {
+                                 return `Persone coinvolte: ${payment.people.join(', ')}`;
+                               }
+                               
+                               const allMemberNames = subscription.people.map(person => person.name);
+                               const paidMembers = payment.people || [];
+                               const unpaidMembers = allMemberNames.filter(name => !paidMembers.includes(name));
+                               
+                               if (unpaidMembers.length === 0) {
+                                 return 'Saldato da tutti';
+                               } else if (unpaidMembers.length === 1) {
+                                 return `${unpaidMembers[0]} non ha pagato`;
+                               } else {
+                                 return `${unpaidMembers.join(', ')} non hanno pagato`;
+                               }
+                             })()}
                            </p>
                          )}
                          {payment.notes && (
@@ -2025,7 +2116,12 @@ const AllPaymentsSection = ({ payments, loading, onAddPayment, onEditPayment, on
                          )}
                        </div>
                      </div>
-                     <div className="flex items-center space-x-2">
+                     <div className="flex items-center space-x-4">
+                       <div className="text-right">
+                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                           {payment.date ? formatDate(payment.date) : 'Data non disponibile'}
+                         </p>
+                       </div>
                        <div className="flex space-x-1">
                          <Button
                            variant="secondary"
@@ -2068,7 +2164,18 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
     people: [],
     notes: ''
   });
-  const [newPerson, setNewPerson] = useState('');
+
+  // Inizializza le persone coinvolte con tutti i membri pre-selezionati e il costo dell'abbonamento
+  React.useEffect(() => {
+    if (subscription && subscription.people) {
+      const allMemberNames = subscription.people.map(person => person.name);
+      setFormData(prev => ({
+        ...prev,
+        people: allMemberNames,
+        amount: subscription.amount ? subscription.amount.toString() : ''
+      }));
+    }
+  }, [subscription, isOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -2081,24 +2188,15 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
         people: [],
         notes: ''
       });
-      setNewPerson('');
     }
   };
 
-  const addPerson = () => {
-    if (newPerson.trim() && !formData.people.includes(newPerson.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        people: [...prev.people, newPerson.trim()]
-      }));
-      setNewPerson('');
-    }
-  };
-
-  const removePerson = (personToRemove) => {
+  const togglePerson = (personName) => {
     setFormData(prev => ({
       ...prev,
-      people: prev.people.filter(person => person !== personToRemove)
+      people: prev.people.includes(personName)
+        ? prev.people.filter(p => p !== personName)
+        : [...prev.people, personName]
     }));
   };
 
@@ -2137,45 +2235,35 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
           {/* Persone coinvolte */}
           <div>
             <label className="label">Persone coinvolte</label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={newPerson}
-                onChange={(e) => setNewPerson(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addPerson();
-                  }
-                }}
-                className="form-input flex-1"
-                placeholder="Aggiungi persona"
-              />
-              <Button type="button" variant="secondary" onClick={addPerson}>
-                <Plus className="h-4 w-4" />
-              </Button>
+            <div className="space-y-2">
+              {subscription && subscription.people ? (
+                subscription.people.map((person) => (
+                  <label key={person.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.people.includes(person.name)}
+                      onChange={() => togglePerson(person.name)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                        <User className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {person.name}
+                      </span>
+                      {isOwner(person) && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          (Proprietario)
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Nessun membro disponibile</p>
+              )}
             </div>
-            
-            {/* Lista persone aggiunte */}
-            {formData.people.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.people.map((person, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm rounded-md"
-                  >
-                    {person}
-                    <button
-                      type="button"
-                      onClick={() => removePerson(person)}
-                      className="ml-2 text-gray-500 hover:text-red-500"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Note */}
@@ -2212,19 +2300,18 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
     people: [],
     notes: ''
   });
-  const [newPerson, setNewPerson] = useState('');
 
   // Inizializza il form quando il pagamento cambia
   React.useEffect(() => {
     if (payment) {
       setFormData({
         date: payment.date ? payment.date.split('T')[0] : '',
-        amount: payment.amount ? payment.amount.toString() : '0',
+        amount: payment.amount ? payment.amount.toString() : (subscription?.amount ? subscription.amount.toString() : '0'),
         people: payment.people || [],
         notes: payment.notes || ''
       });
     }
-  }, [payment]);
+  }, [payment, subscription]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -2244,20 +2331,12 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
     }
   };
 
-  const addPerson = () => {
-    if (newPerson.trim() && !formData.people.includes(newPerson.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        people: [...prev.people, newPerson.trim()]
-      }));
-      setNewPerson('');
-    }
-  };
-
-  const removePerson = (personToRemove) => {
+  const togglePerson = (personName) => {
     setFormData(prev => ({
       ...prev,
-      people: prev.people.filter(person => person !== personToRemove)
+      people: prev.people.includes(personName)
+        ? prev.people.filter(p => p !== personName)
+        : [...prev.people, personName]
     }));
   };
 
@@ -2307,45 +2386,35 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
           {/* Persone coinvolte */}
           <div>
             <label className="label">Persone coinvolte</label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={newPerson}
-                onChange={(e) => setNewPerson(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addPerson();
-                  }
-                }}
-                className="form-input flex-1"
-                placeholder="Aggiungi persona"
-              />
-              <Button type="button" variant="secondary" onClick={addPerson}>
-                <Plus className="h-4 w-4" />
-              </Button>
+            <div className="space-y-2">
+              {subscription && subscription.people ? (
+                subscription.people.map((person) => (
+                  <label key={person.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.people.includes(person.name)}
+                      onChange={() => togglePerson(person.name)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                        <User className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {person.name}
+                      </span>
+                      {isOwner(person) && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          (Proprietario)
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Nessun membro disponibile</p>
+              )}
             </div>
-            
-            {/* Lista persone aggiunte */}
-            {formData.people.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.people.map((person, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm rounded-md"
-                  >
-                    {person}
-                    <button
-                      type="button"
-                      onClick={() => removePerson(person)}
-                      className="ml-2 text-gray-500 hover:text-red-500"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Note */}

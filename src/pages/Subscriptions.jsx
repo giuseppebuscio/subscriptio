@@ -19,6 +19,7 @@ import { monthlyEquivalent } from '../utils/finance';
 import { useNavigate } from 'react-router-dom';
 import { getTranslatedCategories, translateCategory } from '../utils/categories';
 import { formatDate } from '../utils/dates';
+import { ensureOwnerMember } from '../utils/ownerMember';
 
 const Subscriptions = () => {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -51,7 +52,12 @@ const Subscriptions = () => {
     try {
       setLoading(true);
       const data = await subscriptionsRepo.list();
-      setSubscriptions(data);
+      // Ensure Giuseppe is always present as owner in all subscriptions
+      const subscriptionsWithOwner = data.map(subscription => ({
+        ...subscription,
+        people: ensureOwnerMember(subscription.people || [])
+      }));
+      setSubscriptions(subscriptionsWithOwner);
     } catch (error) {
       // Gestione silenziosa dell'errore
     } finally {
@@ -61,7 +67,12 @@ const Subscriptions = () => {
 
   const handleAddSubscription = async (subscriptionData) => {
     try {
-      await subscriptionsRepo.create(subscriptionData);
+      // Ensure Giuseppe is always added as owner member
+      const subscriptionWithOwner = {
+        ...subscriptionData,
+        people: ensureOwnerMember(subscriptionData.people || [])
+      };
+      await subscriptionsRepo.create(subscriptionWithOwner);
       setShowAddModal(false);
       loadSubscriptions();
     } catch (error) {
