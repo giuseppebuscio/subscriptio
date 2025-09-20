@@ -7,7 +7,8 @@ import Button from './components/Button';
 import ExpiringSubscriptionsModal from './components/ExpiringSubscriptionsModal';
 import { 
   CreditCard, 
-  AlertTriangle
+  AlertTriangle,
+  PanelLeft
 } from 'lucide-react';
 import { paymentsRepo } from './repositories/paymentsRepo';
 import subscriptionsRepo from './repositories/subscriptionsRepo';
@@ -31,6 +32,8 @@ function App() {
   const location = useLocation();
   const [theme, setTheme] = useState('light');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [showUpcomingPayments, setShowUpcomingPayments] = useState(false);
   const [upcomingPayments, setUpcomingPayments] = useState([]);
   const [showExpiringSubscriptions, setShowExpiringSubscriptions] = useState(false);
@@ -46,6 +49,25 @@ function App() {
     // Check for upcoming payments and expiring subscriptions on app load
     checkUpcomingPayments();
     checkExpiringSubscriptions();
+  }, []);
+
+  // Detect mobile and set default sidebar state
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768; // md breakpoint
+      setIsMobile(mobile);
+      
+      // On mobile, sidebar should be collapsed by default and always visible
+      if (mobile) {
+        setIsSidebarCollapsed(true); // Always collapsed on mobile
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Controlla le scadenze quando cambia la route
@@ -125,8 +147,25 @@ function App() {
   };
 
   const handleSidebarToggle = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
+    if (isMobile) {
+      // On mobile, toggle the expanded overlay
+      setIsMobileSidebarOpen(!isMobileSidebarOpen);
+    } else {
+      // On desktop, toggle collapsed state
+      setIsSidebarCollapsed(!isSidebarCollapsed);
+    }
   };
+
+  const handleMobileSidebarClose = () => {
+    setIsMobileSidebarOpen(false);
+  };
+
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    if (isMobile) {
+      setIsMobileSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   const handleNotificationClick = (notification) => {
     // Mark as read
@@ -189,10 +228,22 @@ function App() {
 
   return (
     <div className={`min-h-screen bg-white dark:bg-black transition-colors duration-200 ${theme}`}>
-        <div className="flex h-screen">
+        <div className="flex h-screen relative">
+          {/* Mobile Overlay - Only when expanded */}
+          {isMobile && isMobileSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40"
+              onClick={handleMobileSidebarClose}
+            />
+          )}
+          
+          {/* Sidebar - Always visible on mobile (collapsed), normal behavior on desktop */}
           <Sidebar 
             isCollapsed={isSidebarCollapsed}
+            isMobile={isMobile}
+            isMobileOpen={isMobileSidebarOpen}
             onToggleCollapse={handleSidebarToggle}
+            onMobileClose={handleMobileSidebarClose}
             notifications={notifications}
             currentTheme={theme}
             onThemeToggle={handleThemeToggle}
@@ -200,6 +251,7 @@ function App() {
           />
           
           <main className="flex-1 overflow-y-auto content-padding">
+            
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
