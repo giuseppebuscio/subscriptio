@@ -8,7 +8,6 @@ import {
   Eye, 
   Trash2,
   Smartphone,
-  Users,
   X
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../components/Card';
@@ -264,12 +263,6 @@ const SubscriptionCard = ({ subscription, onDelete, translateRecurrenceType }) =
   const monthlyCost = monthlyEquivalent(subscription);
   const nextPayment = subscription.nextPayment || 'N/A';
   
-  // Calcola la quota individuale
-  // Se è condiviso, dividi per il numero totale di persone (participants + 1 per l'utente corrente)
-  const totalPeople = subscription.shared && subscription.participants?.length > 0 
-    ? subscription.participants.length + 1 
-    : 1;
-  const individualQuota = subscription.amount / totalPeople;
   
 
 
@@ -296,10 +289,6 @@ const SubscriptionCard = ({ subscription, onDelete, translateRecurrenceType }) =
         
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Quota:</span>
-            <span className="font-medium">€{individualQuota.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">Stato:</span>
             <Badge 
               variant={subscription.status === 'active' ? 'success' : 'warning'}
@@ -309,15 +298,6 @@ const SubscriptionCard = ({ subscription, onDelete, translateRecurrenceType }) =
             </Badge>
           </div>
         </div>
-        
-        {subscription.shared && (
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-              <Users className="h-4 w-4 mr-1" />
-              Condiviso con {subscription.participants?.length || 0} persone
-            </div>
-          </div>
-        )}
         
         <div className="flex justify-end space-x-2 mt-4">
           <Button 
@@ -363,12 +343,6 @@ const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType }) =>
                 <Badge variant="info" size="sm">
                   {subscription.category}
                 </Badge>
-                {subscription.shared && (
-                  <Badge variant="success" size="sm">
-                    <Users className="h-3 w-3 mr-1" />
-                    Condiviso
-                  </Badge>
-                )}
               </div>
             </div>
           </div>
@@ -430,10 +404,6 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
     startDate: '',
     numberOfInstallments: null,
     endDate: null,
-    shared: false,
-    participants: [],
-    people: [],
-    newPersonName: '',
     notes: '',
     status: 'active'
   });
@@ -442,69 +412,30 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
     if (subscription) {
       setFormData(subscription);
     } else {
-              setFormData({
-          name: '',
-          category: '',
-          amount: '',
-          amountType: 'fixed',
-          recurrence: {
-            type: 'monthly',
-            interval: 1,
-            day: 15
-          },
-          startDate: '',
-          numberOfInstallments: null,
-          endDate: null,
-          shared: false,
-          participants: [],
-          people: [],
-          newPersonName: '',
-          notes: '',
-          status: 'active'
-        });
+      setFormData({
+        name: '',
+        category: '',
+        amount: '',
+        amountType: 'fixed',
+        recurrence: {
+          type: 'monthly',
+          interval: 1,
+          day: 15
+        },
+        startDate: '',
+        numberOfInstallments: null,
+        endDate: null,
+        notes: '',
+        status: 'active'
+      });
     }
   }, [subscription]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Prepara i dati per il salvataggio
-    const dataToSave = {
-      ...formData,
-      // Calcola il numero di persone coinvolte
-      participants: formData.shared ? formData.people : []
-    };
-    
-    onSave(dataToSave);
+    onSave(formData);
   };
 
-  // Gestisce l'aggiunta di una persona
-  const handleAddPerson = () => {
-    if (formData.newPersonName && formData.newPersonName.trim()) {
-      const newPerson = {
-        id: `person_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        name: formData.newPersonName.trim(),
-        quota: 0,
-        quotaType: 'fixed',
-        paymentStatus: 'pending'
-      };
-      setFormData(prev => ({
-        ...prev,
-        people: [...prev.people, newPerson],
-        participants: [...prev.participants, newPerson], // Salva anche in participants
-        newPersonName: ''
-      }));
-    }
-  };
-
-  // Gestisce la rimozione di una persona
-  const handleRemovePerson = (personId) => {
-    setFormData(prev => ({
-      ...prev,
-      people: prev.people.filter(p => p.id !== personId),
-      participants: prev.participants.filter(p => p.id !== personId) // Rimuovi anche da participants
-    }));
-  };
 
   return (
     <Modal
@@ -652,68 +583,6 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
           />
         </div>
 
-        {/* Condivisione e Persone Coinvolte */}
-        <div className="card-grid-2">
-          <div className="flex flex-col">
-            <label className="label">Condivisione</label>
-            <div className="h-10 flex items-center space-x-2 pl-0 pr-3">
-              <input
-                type="checkbox"
-                checked={formData.shared}
-                onChange={(e) => setFormData({ ...formData, shared: e.target.checked })}
-                className="form-checkbox h-4 w-4"
-              />
-              <span className="text-sm text-gray-600 dark:text-gray-400">Seleziona per inserire persone coinvolte</span>
-            </div>
-          </div>
-          
-          {formData.shared && (
-            <div className="flex flex-col">
-              <label className="label">Persone Coinvolte</label>
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={formData.newPersonName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, newPersonName: e.target.value }))}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === 'Tab' || e.key === ',') {
-                      e.preventDefault();
-                      handleAddPerson();
-                    }
-                  }}
-                  onBlur={() => {
-                    if (formData.newPersonName && formData.newPersonName.trim()) {
-                      handleAddPerson();
-                    }
-                  }}
-                  className="form-input w-full h-10 py-0"
-                  placeholder="Aggiungi persone"
-                />
-                
-                {/* Persone già aggiunte come tag sotto l'input */}
-                {formData.people.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.people.map((person) => (
-                      <span
-                        key={person.id}
-                        className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm rounded-md"
-                      >
-                        {person.name}
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePerson(person.id)}
-                          className="ml-2 text-gray-500 hover:text-red-500"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Note - Occupa entrambe le colonne */}
         <div>
