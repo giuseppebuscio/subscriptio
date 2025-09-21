@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './components/Sidebar';
@@ -264,7 +264,7 @@ function App() {
   };
 
   // Auth handlers
-  const handleLogin = async (formData) => {
+  const handleLogin = useCallback(async (formData) => {
     setIsAuthSubmitting(true);
     setAuthError('');
 
@@ -273,15 +273,19 @@ function App() {
       
       if (result.success) {
         setAuthError('');
+        return result;
       } else {
         setAuthError(result.error);
+        return result;
       }
     } catch (error) {
-      setAuthError('Si è verificato un errore. Riprova.');
+      const errorResult = { success: false, error: 'Si è verificato un errore. Riprova.' };
+      setAuthError(errorResult.error);
+      return errorResult;
     } finally {
       setIsAuthSubmitting(false);
     }
-  };
+  }, [login]);
 
   const handleRegister = () => {
     setCurrentPage('register');

@@ -1,4 +1,4 @@
-import { mockPayments } from '../data/mock/payments.js';
+// Mock data removed - using empty arrays by default
 
 const STORAGE_KEY = 'subscriptio_payments';
 
@@ -15,12 +15,11 @@ class PaymentsRepository {
   }
 
   /**
-   * Initialize storage with mock data if empty
+   * Initialize storage (empty by default)
    */
   initializeStorage() {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(mockPayments));
-    }
+    // Force clear existing mock data and start fresh
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
   }
 
   /**
@@ -262,12 +261,12 @@ class PaymentsRepository {
   }
 
   /**
-   * Reset to mock data
+   * Clear all payments
    * @returns {Promise<boolean>} Success status
    */
-  async resetToMock() {
+  async clearAll() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(mockPayments));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
       return true;
     } catch (error) {
       return false;

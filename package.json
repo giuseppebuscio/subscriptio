@@ -12,7 +12,8 @@
     "migrate-members": "node migrate-members-structure.js",
     "test-filtering": "node test-user-filtering.js",
     "debug-subscriptions": "node debug-subscriptions.js",
-    "test-repository": "node test-repository.js"
+    "test-repository": "node test-repository.js",
+    "clear-mock": "node clear-mock-data.js"
   },
   "dependencies": {
     "date-fns": "^2.30.0",

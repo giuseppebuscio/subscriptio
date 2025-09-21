@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulizia Dati Mock</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #c82333;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .info {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Pulizia Dati Mock</h1>
+        <p>Questo strumento rimuove tutti i dati mock dal localStorage del browser.</p>
+        
+        <button onclick="clearMockData()">Pulisci Dati Mock</button>
+        
+        <div id="result"></div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+            <h3>Dati che verranno rimossi:</h3>
+            <ul>
+                <li>Pagamenti fittizi (subscriptio_payments)</li>
+                <li>Persone fittizie (subscriptio_people)</li>
+                <li>Notifiche fittizie (subscriptio_notifications)</li>
+                <li>Impostazioni fittizie (subscriptio_settings)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function clearMockData() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Pulizia in corso...</p>';
+            
+            // Chiavi da pulire
+            const keysToClear = [
+                'subscriptio_payments',
+                'subscriptio_people', 
+                'subscriptio_notifications',
+                'subscriptio_settings'
+            ];
+            
+            let clearedCount = 0;
+            let notFoundCount = 0;
+            
+            // Pulisci ogni chiave
+            keysToClear.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    clearedCount++;
+                } else {
+                    notFoundCount++;
+                }
+            });
+            
+            // Mostra risultato
+            resultDiv.innerHTML = `
+                <div class="success">
+                    ✅ Pulizia completata!<br>
+                    Rimosse ${clearedCount} chiavi<br>
+                    ${notFoundCount} chiavi non trovate
+                </div>
+                <p><strong>Ora ricarica la pagina dell'app per vedere i risultati.</strong></p>
+            `;
+        }
+        
+        // Mostra stato attuale
+        window.onload = function() {
+            const keysToCheck = [
+                'subscriptio_payments',
+                'subscriptio_people', 
+                'subscriptio_notifications',
+                'subscriptio_settings'
+            ];
+            
+            let foundKeys = [];
+            keysToCheck.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    foundKeys.push(key);
+                }
+            });
+            
+            if (foundKeys.length > 0) {
+                document.getElementById('result').innerHTML = `
+                    <div class="info">
+                        <strong>Dati mock trovati:</strong><br>
+                        ${foundKeys.join('<br>')}
+                    </div>
+                `;
+            } else {
+                document.getElementById('result').innerHTML = `
+                    <div class="success">
+                        ✅ Nessun dato mock trovato! Il localStorage è già pulito.
+                    </div>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,45 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../components/Button';
 import { Mail, Lock, Eye, EyeOff, Smartphone, Calendar, BarChart3 } from 'lucide-react';
 
-const WelcomePage = ({ onLogin, onRegister, onGoogleLogin, onAppleLogin, error, isLoading }) => {
+const WelcomePage = React.memo(({ onLogin, onRegister, onGoogleLogin, onAppleLogin, error, isLoading }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
+  const [lastError, setLastError] = useState('');
 
-  const handleInputChange = (e) => {
+  const triggerShake = useCallback(() => {
+    if (!isShaking) {
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+    }
+  }, [isShaking]);
+
+  // Attiva l'effetto shake quando c'è un errore
+  useEffect(() => {
+    if (error && error !== lastError) {
+      setLastError(error);
+      triggerShake();
+    }
+  }, [error, lastError, triggerShake]);
+
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-  };
+  }, []);
 
-  const handleLogin = async (e) => {
+  const handleLogin = useCallback((e) => {
     e.preventDefault();
+    e.stopPropagation();
     onLogin(formData);
-  };
+  }, [onLogin, formData]);
 
-  const handleRegister = () => {
+  const handleRegister = useCallback(() => {
     onRegister();
-  };
+  }, [onRegister]);
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = useCallback(() => {
     onGoogleLogin();
-  };
+  }, [onGoogleLogin]);
 
-  const handleAppleLogin = () => {
+  const handleAppleLogin = useCallback(() => {
     onAppleLogin();
-  };
+  }, [onAppleLogin]);
 
-  const features = [
+  const features = useMemo(() => [
     { text: "Gestisci", icon: Smartphone },
     { text: "Monitora", icon: Calendar },
     { text: "Analizza", icon: BarChart3 }
-  ];
+  ], []);
 
   return (
     <div className="min-h-screen bg-white dark:bg-black flex flex-col">
@@ -91,7 +109,7 @@ const WelcomePage = ({ onLogin, onRegister, onGoogleLogin, onAppleLogin, error, 
           transition={{ duration: 0.8, delay: 1.2 }}
           className="max-w-md mx-auto"
         >
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
             {/* Email Input */}
             <div>
               <div className="relative">
@@ -113,7 +131,7 @@ const WelcomePage = ({ onLogin, onRegister, onGoogleLogin, onAppleLogin, error, 
             {/* Password Input */}
             <div>
               <div className="relative">
-                <input
+                <motion.input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
@@ -121,6 +139,8 @@ const WelcomePage = ({ onLogin, onRegister, onGoogleLogin, onAppleLogin, error, 
                   className="w-full px-4 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white font-inter text-sm"
                   placeholder="Password"
                   required
+                  animate={isShaking ? { x: [-10, 10, -10, 10, 0] } : { x: 0 }}
+                  transition={{ duration: 0.5 }}
                 />
                 <label className="absolute -top-2 left-4 bg-white dark:bg-black px-2 text-xs text-gray-500 dark:text-gray-400">
                   Password
@@ -143,15 +163,14 @@ const WelcomePage = ({ onLogin, onRegister, onGoogleLogin, onAppleLogin, error, 
             )}
 
             {/* Login Button */}
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
+            <button
+              type="button"
               disabled={isLoading}
-              className="w-full font-normal rounded-2xl"
+              onClick={handleLogin}
+              className="w-full px-4 py-3 bg-[rgb(34,34,34)] hover:bg-[rgb(25,25,25)] text-white font-normal rounded-2xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Caricamento...' : 'Accedi'}
-            </Button>
+            </button>
           </form>
 
           {/* Divider */}
@@ -219,6 +238,6 @@ const WelcomePage = ({ onLogin, onRegister, onGoogleLogin, onAppleLogin, error, 
       </motion.div>
     </div>
   );
-};
+});
 
 export default WelcomePage;
