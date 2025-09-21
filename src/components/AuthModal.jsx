@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from './Modal';
 import Button from './Button';
@@ -13,6 +13,18 @@ const AuthModal = ({ isOpen, onClose, mode, onSwitchMode, onSubmit, loading, err
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Reset form data when mode changes or modal opens
+  useEffect(() => {
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      name: ''
+    });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  }, [mode, isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -19,11 +19,16 @@ const WelcomePage = React.memo(({ onLogin, onRegister, onGoogleLogin, onAppleLog
     }
   }, [isShaking]);
 
-  // Attiva l'effetto shake quando c'è un errore
+  // Attiva l'effetto shake quando c'è un errore e resetta i dati del form
   useEffect(() => {
     if (error && error !== lastError) {
       setLastError(error);
       triggerShake();
+      // Reset form data when there's an error
+      setFormData({
+        email: '',
+        password: ''
+      });
     }
   }, [error, lastError, triggerShake]);
 

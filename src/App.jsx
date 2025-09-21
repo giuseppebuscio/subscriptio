@@ -51,6 +51,7 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState('login'); // 'login' or 'register'
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
   useEffect(() => {
     // Initialize theme
@@ -346,9 +347,18 @@ function App() {
     setAuthError('');
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setShowLogoutConfirmation(true);
+  };
+
+  const confirmLogout = async () => {
     await logout();
     navigate('/');
+    setShowLogoutConfirmation(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirmation(false);
   };
 
   const handleGoogleLogin = async () => {
@@ -583,6 +593,47 @@ function App() {
           loading={isAuthSubmitting}
           error={authError}
         />
+
+        {/* Logout Confirmation Modal */}
+        <Modal
+          isOpen={showLogoutConfirmation}
+          onClose={cancelLogout}
+          title="Conferma Logout"
+          size="sm"
+        >
+          <div className="text-center">
+            <div className="mb-6">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+                <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                Sei sicuro di voler uscire?
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Dovrai effettuare nuovamente l'accesso per utilizzare l'applicazione.
+              </p>
+            </div>
+            
+            <div className="flex space-x-3 justify-end">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={cancelLogout}
+              >
+                Annulla
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={confirmLogout}
+              >
+                Esci
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
   );
 }
