@@ -155,15 +155,14 @@ class PeopleRepository {
    */
   async getBySubscription(subscriptionId, subscriptions) {
     try {
-      const people = await this.list();
       const subscription = subscriptions.find(sub => sub.id === subscriptionId);
       
-      if (!subscription || !subscription.participants) {
+      if (!subscription || !subscription.people) {
         return [];
       }
       
-      const participantIds = subscription.participants.map(p => p.personId);
-      return people.filter(person => participantIds.includes(person.id));
+      // I membri sono ora direttamente nell'abbonamento
+      return subscription.people || [];
     } catch (error) {
       return [];
     }

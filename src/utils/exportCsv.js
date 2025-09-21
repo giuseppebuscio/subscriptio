@@ -66,15 +66,11 @@ export const exportSubscriptionsCSV = (subscriptions, filename = 'subscriptions.
     { key: 'name', label: 'Nome' },
     { key: 'category', label: 'Categoria' },
     { key: 'amount', label: 'Importo' },
-    { key: 'amountType', label: 'Tipo Importo' },
     { key: 'recurrence.type', label: 'Tipo Ricorrenza' },
     { key: 'recurrence.interval', label: 'Intervallo Ricorrenza' },
     { key: 'recurrence.day', label: 'Giorno Ricorrenza' },
-    { key: 'startDate', label: 'Data Inizio' },
-    { key: 'endDate', label: 'Data Fine' },
     { key: 'status', label: 'Stato' },
-    { key: 'shared', label: 'Condiviso' },
-    { key: 'notes', label: 'Note' }
+    { key: 'shared', label: 'Condiviso' }
   ];
   
   const csvContent = convertToCSV(subscriptions, headers);

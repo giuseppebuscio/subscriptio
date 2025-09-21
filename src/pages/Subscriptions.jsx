@@ -8,7 +8,8 @@ import {
   Eye, 
   Trash2,
   Smartphone,
-  X
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../components/Card';
 import Button from '../components/Button';
@@ -21,12 +22,15 @@ import { getTranslatedCategories, translateCategory } from '../utils/categories'
 import { formatDate } from '../utils/dates';
 import { ensureOwnerMember } from '../utils/ownerMember';
 
-const Subscriptions = () => {
+const Subscriptions = ({ user }) => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [subscriptionToDelete, setSubscriptionToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
 
@@ -45,13 +49,18 @@ const Subscriptions = () => {
   };
 
   useEffect(() => {
-    loadSubscriptions();
-  }, []);
+    if (user?.uid) {
+      loadSubscriptions();
+    }
+  }, [user?.uid]);
 
   const loadSubscriptions = async () => {
+    if (!user?.uid) return;
+    
     try {
       setLoading(true);
-      const data = await subscriptionsRepo.list();
+      const data = await subscriptionsRepo.list(user.uid);
+      
       // Ensure Giuseppe is always present as owner in all subscriptions
       const subscriptionsWithOwner = data.map(subscription => ({
         ...subscription,
@@ -63,7 +72,7 @@ const Subscriptions = () => {
       );
       setSubscriptions(sortedSubscriptions);
     } catch (error) {
-      // Gestione silenziosa dell'errore
+      console.error('Errore nel caricamento degli abbonamenti:', error);
     } finally {
       setLoading(false);
     }
@@ -76,11 +85,13 @@ const Subscriptions = () => {
         ...subscriptionData,
         people: ensureOwnerMember(subscriptionData.people || [])
       };
-      await subscriptionsRepo.create(subscriptionWithOwner);
+      
+      await subscriptionsRepo.create(subscriptionWithOwner, user?.uid);
       setShowAddModal(false);
-      loadSubscriptions(); // Questo già ordina alfabeticamente
+      // Ricarica gli abbonamenti per mostrare il nuovo
+      await loadSubscriptions();
     } catch (error) {
-      // Gestione silenziosa dell'errore
+      console.error('Errore nella creazione dell\'abbonamento:', error);
     }
   };
 
@@ -88,7 +99,7 @@ const Subscriptions = () => {
     try {
       await subscriptionsRepo.update(id, updates);
       setEditingSubscription(null);
-      loadSubscriptions(); // Questo già ordina alfabeticamente
+      await loadSubscriptions(); // Ricarica gli abbonamenti
       
       // Refresh delle scadenze se è stata modificata la data di rinnovo
       if (updates.renewalDay || updates.recurrence) {
@@ -97,19 +108,34 @@ const Subscriptions = () => {
         }
       }
     } catch (error) {
-      // Gestione silenziosa dell'errore
+      console.error('Errore nella modifica dell\'abbonamento:', error);
     }
   };
 
-  const handleDeleteSubscription = async (id) => {
-    if (window.confirm('Sei sicuro di voler eliminare questo abbonamento?')) {
-      try {
-        await subscriptionsRepo.delete(id);
-        loadSubscriptions(); // Questo già ordina alfabeticamente
-      } catch (error) {
-        // Gestione silenziosa dell'errore
-      }
+  const handleDeleteSubscription = (subscription) => {
+    setSubscriptionToDelete(subscription);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteSubscription = async () => {
+    if (!subscriptionToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      await subscriptionsRepo.delete(subscriptionToDelete.id);
+      await loadSubscriptions(); // Ricarica gli abbonamenti
+      setShowDeleteModal(false);
+      setSubscriptionToDelete(null);
+    } catch (error) {
+      console.error('Errore nell\'eliminazione dell\'abbonamento:', error);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const cancelDeleteSubscription = () => {
+    setShowDeleteModal(false);
+    setSubscriptionToDelete(null);
   };
 
   const handleToggleStatus = async (id, newStatus) => {
@@ -128,13 +154,12 @@ const Subscriptions = () => {
         window.refreshExpiringSubscriptions();
       }
     } catch (error) {
-      // Gestione silenziosa dell'errore
+      console.error('Errore nel cambio stato dell\'abbonamento:', error);
     }
   };
 
   const filteredSubscriptions = subscriptions.filter(sub => {
-    const matchesSearch = sub.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         sub.notes.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = sub.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'all' || sub.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
@@ -234,7 +259,7 @@ const Subscriptions = () => {
               <SubscriptionCard
                 key={subscription.id}
                 subscription={subscription}
-                onDelete={() => handleDeleteSubscription(subscription.id)}
+                onDelete={() => handleDeleteSubscription(subscription)}
                 onToggleStatus={handleToggleStatus}
                 translateRecurrenceType={translateRecurrenceType}
               />
@@ -252,7 +277,7 @@ const Subscriptions = () => {
               <SubscriptionRow
                 key={subscription.id}
                 subscription={subscription}
-                onDelete={() => handleDeleteSubscription(subscription.id)}
+                onDelete={() => handleDeleteSubscription(subscription)}
                 onToggleStatus={handleToggleStatus}
                 translateRecurrenceType={translateRecurrenceType}
               />
@@ -278,7 +303,7 @@ const Subscriptions = () => {
             {!searchQuery && filterCategory === 'all' && (
               <Button onClick={() => setShowAddModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Aggiungi primo abbonamento
+                Inizia ora
               </Button>
             )}
           </CardBody>
@@ -297,6 +322,15 @@ const Subscriptions = () => {
           ? (data) => handleEditSubscription(editingSubscription.id, data)
           : handleAddSubscription
         }
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={cancelDeleteSubscription}
+        onConfirm={confirmDeleteSubscription}
+        subscription={subscriptionToDelete}
+        isDeleting={isDeleting}
       />
     </motion.div>
   );
@@ -495,75 +529,73 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
       isOpen={isOpen}
       onClose={onClose}
       title={subscription ? 'Modifica abbonamento' : 'Aggiungi abbonamento'}
-      size="xl"
+      size="md"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Nome e Categoria */}
-        <div className="card-grid-2">
-          <div>
-            <label className="label">Nome *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="form-input h-10 py-0"
-              placeholder="Netflix, Spotify, ecc."
-            />
-          </div>
-          
-          <div>
-            <label className="label">Categoria *</label>
-            <select
-              required
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="form-select h-10 py-0"
-            >
-              <option value="">Seleziona categoria</option>
-              <option value="Streaming">Streaming</option>
-              <option value="Musica">Musica</option>
-              <option value="Utilità">Utilità</option>
-              <option value="Salute">Salute</option>
-              <option value="Trasporti">Trasporti</option>
-              <option value="Tecnologia">Tecnologia</option>
-              <option value="Sport">Sport</option>
-              <option value="Formazione">Formazione</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Altro">Altro</option>
-            </select>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Nome */}
+        <div>
+          <label className="label">Nome *</label>
+          <input
+            type="text"
+            required
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="form-input h-10 py-0"
+            placeholder="Netflix, Spotify, ecc."
+          />
+        </div>
+        
+        {/* Categoria */}
+        <div>
+          <label className="label">Categoria *</label>
+          <select
+            required
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            className="form-select h-10 py-0"
+          >
+            <option value="">Seleziona categoria</option>
+            <option value="Streaming">Streaming</option>
+            <option value="Musica">Musica</option>
+            <option value="Utilità">Utilità</option>
+            <option value="Salute">Salute</option>
+            <option value="Trasporti">Trasporti</option>
+            <option value="Tecnologia">Tecnologia</option>
+            <option value="Sport">Sport</option>
+            <option value="Formazione">Formazione</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Altro">Altro</option>
+          </select>
         </div>
 
-        {/* Costo e Rinnovo */}
-        <div className="card-grid-2">
-          <div>
-            <label className="label">Costo *</label>
-            <input
-              type="number"
-              step="0.01"
-              required
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              className="form-input h-10 py-0"
-              placeholder="0.00"
-            />
-          </div>
-          
-          <div>
-            <label className="label">Rinnovo *</label>
-            <select
-              required
-              value={formData.renewalDay || ''}
-              onChange={(e) => setFormData({ ...formData, renewalDay: parseInt(e.target.value) })}
-              className="form-select h-10 py-0"
-            >
-              <option value="">Seleziona giorno</option>
-              {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
-                <option key={day} value={day}>Ogni {day}° del mese</option>
-              ))}
-            </select>
-          </div>
+        {/* Costo */}
+        <div>
+          <label className="label">Costo *</label>
+          <input
+            type="number"
+            step="0.01"
+            required
+            value={formData.amount}
+            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+            className="form-input h-10 py-0"
+            placeholder="0.00"
+          />
+        </div>
+        
+        {/* Rinnovo */}
+        <div>
+          <label className="label">Rinnovo *</label>
+          <select
+            required
+            value={formData.renewalDay || ''}
+            onChange={(e) => setFormData({ ...formData, renewalDay: parseInt(e.target.value) })}
+            className="form-select h-10 py-0"
+          >
+            <option value="">Seleziona giorno</option>
+            {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
+              <option key={day} value={day}>Ogni {day}° del mese</option>
+            ))}
+          </select>
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
@@ -575,6 +607,48 @@ const SubscriptionModal = ({ isOpen, onClose, subscription, onSave }) => {
           </Button>
         </div>
       </form>
+    </Modal>
+  );
+};
+
+// Delete Confirmation Modal Component
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, subscription, isDeleting }) => {
+  if (!isOpen || !subscription) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="md">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
+        </div>
+        
+        <h3 className="h3 mb-2">Elimina Abbonamento</h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Sei sicuro di voler eliminare l'abbonamento <strong>{subscription.name}</strong>? 
+          Questa azione non può essere annullata.
+        </p>
+        
+        <div className="flex justify-end space-x-3">
+          <Button 
+            variant="secondary" 
+            size="sm"
+            onClick={onClose}
+            disabled={isDeleting}
+          >
+            Annulla
+          </Button>
+          <Button 
+            variant="secondary"
+            size="sm"
+            onClick={onConfirm}
+            loading={isDeleting}
+            disabled={isDeleting}
+            className="bg-black hover:bg-[rgb(25,25,25)] text-white border-black hover:border-[rgb(25,25,25)]"
+          >
+            {isDeleting ? 'Eliminando...' : 'Elimina'}
+          </Button>
+        </div>
+      </div>
     </Modal>
   );
 };

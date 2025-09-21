@@ -18,18 +18,33 @@ class SubscriptionsRepository {
     this.collectionName = 'subscriptions';
   }
 
-  async list() {
+  async list(userId = null) {
     try {
-      const q = query(
-        collection(db, this.collectionName),
-        orderBy('updatedAt', 'desc')
-      );
+      let q;
+      if (userId) {
+        q = query(
+          collection(db, this.collectionName),
+          where('userId', '==', userId)
+        );
+      } else {
+        q = query(
+          collection(db, this.collectionName)
+        );
+      }
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      const subscriptions = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      // Ordina localmente per updatedAt
+      return subscriptions.sort((a, b) => {
+        const aTime = a.updatedAt?.toDate?.() || new Date(0);
+        const bTime = b.updatedAt?.toDate?.() || new Date(0);
+        return bTime - aTime;
+      });
     } catch (error) {
+      console.error('Errore nel caricamento degli abbonamenti:', error);
       return [];
     }
   }
@@ -50,14 +65,20 @@ class SubscriptionsRepository {
     }
   }
 
-  async create(subscriptionData) {
+  async create(subscriptionData, userId = null) {
     try {
-      const docRef = await addDoc(collection(db, this.collectionName), {
+      const dataToSave = {
         ...subscriptionData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      });
-      return { id: docRef.id, ...subscriptionData };
+      };
+      
+      if (userId) {
+        dataToSave.userId = userId;
+      }
+      
+      const docRef = await addDoc(collection(db, this.collectionName), dataToSave);
+      return { id: docRef.id, ...dataToSave };
     } catch (error) {
       throw error;
     }
@@ -103,18 +124,28 @@ class SubscriptionsRepository {
     }
   }
 
-  async getActive() {
+  async getActive(userId = null) {
     try {
-      const q = query(
-        collection(db, this.collectionName),
-        where('status', '==', 'active')
-      );
+      let q;
+      if (userId) {
+        q = query(
+          collection(db, this.collectionName),
+          where('userId', '==', userId),
+          where('status', '==', 'active')
+        );
+      } else {
+        q = query(
+          collection(db, this.collectionName),
+          where('status', '==', 'active')
+        );
+      }
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
     } catch (error) {
+      console.error('Errore nel caricamento degli abbonamenti attivi:', error);
       return [];
     }
   }
@@ -126,7 +157,6 @@ class SubscriptionsRepository {
       
       return subscriptions.filter(sub => 
         sub.name.toLowerCase().includes(lowerQuery) ||
-        (sub.notes && sub.notes.toLowerCase().includes(lowerQuery)) ||
         (sub.category && sub.category.toLowerCase().includes(lowerQuery))
       );
     } catch (error) {

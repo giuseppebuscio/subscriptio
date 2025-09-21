@@ -35,7 +35,7 @@ import { findBestLogo, getAvailableLogos, getDefaultLogo } from '../utils/logoMa
 import { translateCategory } from '../utils/categories';
 import { ensureOwnerMember, isOwner } from '../utils/ownerMember';
 
-const SubscriptionDetail = () => {
+const SubscriptionDetail = ({ user }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [subscription, setSubscription] = useState(null);
@@ -90,12 +90,11 @@ const SubscriptionDetail = () => {
             // Non sovrascrivere il campo type se recurrence è presente
             type: data.recurrence?.type || data.type || 'monthly',
             periodicity: data.recurrence?.type || data.type || 'monthly',
-            startDate: data.startDate || '2024-01-01',
-            duration: data.numberOfInstallments ? `${data.numberOfInstallments} rate` : (data.endDate ? data.endDate : '∞'),
+            duration: '∞',
             // Sincronizza renewalDay con recurrence.day
             renewalDay: data.renewalDay || data.recurrence?.day || 15,
-            people: ensureOwnerMember(data.people || data.participants?.map((p, index) => ({
-              id: p.personId || `person_${index + 1}`,
+            people: ensureOwnerMember(data.people?.map((p, index) => ({
+              id: p.id || `person_${index + 1}`,
               name: p.name || `Persona ${index + 1}`,
               quota: data.amount * (p.value / 100),
               quotaType: p.shareType === 'percent' ? 'percentage' : 'fixed',
@@ -125,9 +124,7 @@ const SubscriptionDetail = () => {
             logo: findBestLogo('Abbonamento di Esempio') || getDefaultLogo(),
             type: 'monthly',
             amount: 17.99,
-            amountType: 'fixed',
             periodicity: 'monthly',
-               startDate: '2024-01-01',
             duration: '∞',
                category: 'Intrattenimento',
             status: 'active',
@@ -149,7 +146,6 @@ const SubscriptionDetail = () => {
              logo: findBestLogo('Abbonamento di Esempio') || getDefaultLogo(),
           type: 'monthly',
           amount: 17.99,
-          amountType: 'fixed',
           periodicity: 'monthly',
           nextDue: '2025-02-15',
           duration: '∞',
@@ -307,7 +303,6 @@ const SubscriptionDetail = () => {
         date: paymentData.date,
         amount: parseFloat(paymentData.amount),
         people: paymentData.people || [],
-        notes: paymentData.notes || ''
       };
       
       await paymentsRepo.create(newPayment);
@@ -465,7 +460,6 @@ const SubscriptionDetail = () => {
   const handleStartEdit = () => {
     setEditForm({
       name: subscription.name || '',
-      notes: subscription.notes || '',
       renewalDay: subscription.renewalDay || '',
       amount: subscription.amount || ''
     });
@@ -484,7 +478,6 @@ const SubscriptionDetail = () => {
       // Prepara i dati per il salvataggio, mantenendo solo i campi essenziali
       const dataToSave = {
         name: editForm.name,
-        notes: editForm.notes,
         renewalDay: editForm.renewalDay,
         amount: parseFloat(editForm.amount),
         paymentStatus: paymentStatus
@@ -1336,7 +1329,7 @@ const SubscriptionInfoCard = ({ subscription, translateRecurrenceType }) => (
             €{subscription.amount}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {subscription.amountType === 'fixed' ? 'Fisso' : 'Variabile'}
+            Fisso
           </p>
         </div>
         
@@ -1370,14 +1363,13 @@ const CurrentMonthPayment = ({ subscription, onMarkAsPaid }) => {
 
   const getMonthsToPay = () => {
     try {
-      if (!subscription.startDate) return [];
-      
       const now = new Date();
-      const startDate = new Date(subscription.startDate);
-      const startDay = startDate.getDate();
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 12); // Ultimi 12 mesi
+      const startDay = 15; // Giorno fisso per il calcolo
       const monthsToPay = [];
       
-      // Calcola tutti i mesi da pagare dall'inizio dell'abbonamento
+      // Calcola tutti i mesi da pagare negli ultimi 12 mesi
       let currentDate = new Date(startDate);
       currentDate.setDate(startDay);
       
@@ -2094,11 +2086,6 @@ const AllPaymentsSection = ({ payments, loading, onAddPayment, onEditPayment, on
                              })()}
                            </p>
                          )}
-                         {payment.notes && (
-                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                             Note: {payment.notes}
-                           </p>
-                         )}
                        </div>
                      </div>
                      <div className="flex items-center space-x-4">
@@ -2147,7 +2134,6 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
     date: new Date().toISOString().split('T')[0], // Data odierna come default
     amount: '',
     people: [],
-    notes: ''
   });
 
   // Inizializza le persone coinvolte con tutti i membri pre-selezionati e il costo dell'abbonamento
@@ -2171,7 +2157,6 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
         date: new Date().toISOString().split('T')[0],
         amount: '',
         people: [],
-        notes: ''
       });
     }
   };
@@ -2252,16 +2237,6 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
           </div>
 
           {/* Note */}
-          <div>
-            <label className="label">Note</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="form-input"
-              rows="3"
-              placeholder="Note aggiuntive..."
-            />
-          </div>
         </div>
         
         <div className="flex justify-end space-x-3 mt-4">
@@ -2283,7 +2258,6 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
     date: '',
     amount: '',
     people: [],
-    notes: ''
   });
 
   // Inizializza il form quando il pagamento cambia
@@ -2293,7 +2267,6 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
         date: payment.date ? payment.date.split('T')[0] : '',
         amount: payment.amount ? payment.amount.toString() : (subscription?.amount ? subscription.amount.toString() : '0'),
         people: payment.people || [],
-        notes: payment.notes || ''
       });
     }
   }, [payment, subscription]);
@@ -2403,16 +2376,6 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
           </div>
 
           {/* Note */}
-          <div>
-            <label className="label">Note</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="form-input"
-              rows="3"
-              placeholder="Note aggiuntive..."
-            />
-          </div>
         </div>
         
         <div className="flex justify-end space-x-3 mt-4">

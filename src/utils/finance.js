@@ -38,18 +38,14 @@ export const generateNextPayments = (subscription, fromDate, monthsAhead = 12) =
   let currentDate = new Date(fromDate);
   let paymentCount = 0;
   
-  // Handle fixed number of installments
-  const maxPayments = subscription.numberOfInstallments || monthsAhead;
+  // Generate payments for the specified number of months
+  const maxPayments = monthsAhead;
   
   while (paymentCount < maxPayments && paymentCount < monthsAhead) {
     const dueDate = getNextOccurrence(subscription.recurrence, currentDate);
     
     if (!dueDate) break;
     
-    // Check if we've reached the end date
-    if (subscription.endDate && isAfter(dueDate, parseISO(subscription.endDate))) {
-      break;
-    }
     
     const payment = {
       id: `payment_${subscription.id}_${paymentCount}`,
@@ -217,8 +213,7 @@ export const forecast = (subscriptions, months = 12) => {
       if (subscription.status !== 'active') return;
       
       // Check if subscription is active in this month
-      if (subscription.startDate && parseISO(subscription.startDate) > monthEnd) return;
-      if (subscription.endDate && parseISO(subscription.endDate) < monthStart) return;
+      // (All subscriptions are considered active for now)
       
       // Check if this month has a payment
       const monthlyCost = monthlyEquivalent(subscription);

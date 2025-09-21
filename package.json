@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "reset-data": "node reset-all-data.js",
+    "migrate-members": "node migrate-members-structure.js",
+    "test-filtering": "node test-user-filtering.js",
+    "debug-subscriptions": "node debug-subscriptions.js",
+    "test-repository": "node test-repository.js"
   },
   "dependencies": {
     "date-fns": "^2.30.0",

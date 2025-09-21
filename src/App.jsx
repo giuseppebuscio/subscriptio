@@ -36,7 +36,7 @@ import Inbox from './pages/Inbox';
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading: authLoading, login, register, logout } = useAuth();
+  const { user, loading: authLoading, login, register, logout, loginWithGoogle, loginWithApple } = useAuth();
   const [theme, setTheme] = useState('light');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -347,6 +347,44 @@ function App() {
     navigate('/');
   };
 
+  const handleGoogleLogin = async () => {
+    setIsAuthSubmitting(true);
+    setAuthError('');
+
+    try {
+      const result = await loginWithGoogle();
+      
+      if (result.success) {
+        setAuthError('');
+      } else {
+        setAuthError(result.error);
+      }
+    } catch (error) {
+      setAuthError('Si è verificato un errore. Riprova.');
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    setIsAuthSubmitting(true);
+    setAuthError('');
+
+    try {
+      const result = await loginWithApple();
+      
+      if (result.success) {
+        setAuthError('');
+      } else {
+        setAuthError(result.error);
+      }
+    } catch (error) {
+      setAuthError('Si è verificato un errore. Riprova.');
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
   // Show loading screen while checking auth
   if (authLoading) {
     return (
@@ -366,6 +404,8 @@ function App() {
         <RegisterPage 
           onRegister={handleRegisterSubmit}
           onBackToLogin={handleBackToLogin}
+          onGoogleLogin={handleGoogleLogin}
+          onAppleLogin={handleAppleLogin}
           error={authError}
           isLoading={isAuthSubmitting}
         />
@@ -376,6 +416,8 @@ function App() {
       <WelcomePage 
         onLogin={handleLogin}
         onRegister={handleRegister}
+        onGoogleLogin={handleGoogleLogin}
+        onAppleLogin={handleAppleLogin}
         error={authError}
         isLoading={isAuthSubmitting}
       />
@@ -409,8 +451,8 @@ function App() {
           <main className="flex-1 overflow-y-auto content-padding">
             
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/" element={<Dashboard user={user} />} />
+              <Route path="/subscriptions" element={<Subscriptions user={user} />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/accounting" element={<Accounting />} />
               <Route path="/calendar" element={<CalendarPage />} />
@@ -433,7 +475,7 @@ function App() {
                   await loadNotifications();
                 }}
               />} />
-              <Route path="/subscription/:id" element={<SubscriptionDetail />} />
+              <Route path="/subscription/:id" element={<SubscriptionDetail user={user} />} />
             </Routes>
           </main>
         </div>

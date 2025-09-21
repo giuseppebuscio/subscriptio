@@ -18,11 +18,12 @@ import { peopleRepo } from '../repositories/peopleRepo';
 import { monthlyEquivalent, forecast, calculateCategoryBreakdown, computePersonBalances } from '../utils/finance';
 import { formatDate } from '../utils/dates';
 
-const Dashboard = () => {
+const Dashboard = ({ user }) => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [payments, setPayments] = useState([]);
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [stats, setStats] = useState({
     totalSubscriptions: 0,
     activeSubscriptions: 0,
@@ -34,9 +35,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      if (!user?.uid) return;
+      
       try {
         const [subs, pays, pers] = await Promise.all([
-          subscriptionsRepo.list(),
+          subscriptionsRepo.list(user.uid),
           paymentsRepo.list(),
           peopleRepo.list()
         ]);
@@ -61,13 +64,14 @@ const Dashboard = () => {
         });
         
         setLoading(false);
-          } catch (error) {
-      setLoading(false);
-    }
+      } catch (error) {
+        console.error('Errore nel caricamento dei dati:', error);
+        setLoading(false);
+      }
     };
     
     loadData();
-  }, []);
+  }, [user?.uid]);
 
   const forecastData = forecast(subscriptions, 6);
   const categoryData = calculateCategoryBreakdown(subscriptions);
@@ -93,7 +97,9 @@ const Dashboard = () => {
     >
       {/* Page Header */}
       <div>
-        <h1 className="h1">Dashboard</h1>
+        <h1 className="h1">
+          Benvenuto, {user?.displayName || user?.email?.split('@')[0] || 'Utente'}
+        </h1>
         <p className="muted">Panoramica della gestione degli abbonamenti</p>
       </div>
 
