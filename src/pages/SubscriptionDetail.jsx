@@ -129,7 +129,7 @@ const SubscriptionDetail = ({ user }) => {
                category: 'Intrattenimento',
             status: 'active',
             people: ensureOwnerMember([
-              { id: '1', name: 'Giuseppe', quota: 8.99, quotaType: 'fixed', paymentStatus: 'paid' },
+              { id: '1', name: 'Tu', quota: 8.99, quotaType: 'fixed', paymentStatus: 'paid' },
               { id: '2', name: 'Marco', quota: 9.00, quotaType: 'fixed', paymentStatus: 'pending' }
             ]),
             payments: [],
@@ -152,7 +152,7 @@ const SubscriptionDetail = ({ user }) => {
           category: 'Intrattenimento',
           status: 'active',
           people: ensureOwnerMember([
-            { id: '1', name: 'Giuseppe', quota: 8.99, quotaType: 'fixed', paymentStatus: 'paid' },
+            { id: '1', name: 'Tu', quota: 8.99, quotaType: 'fixed', paymentStatus: 'paid' },
             { id: '2', name: 'Marco', quota: 9.00, quotaType: 'fixed', paymentStatus: 'pending' }
           ]),
           payments: [],

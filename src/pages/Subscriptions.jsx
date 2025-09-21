@@ -61,7 +61,7 @@ const Subscriptions = ({ user }) => {
       setLoading(true);
       const data = await subscriptionsRepo.list(user.uid);
       
-      // Ensure Giuseppe is always present as owner in all subscriptions
+      // Ensure Tu is always present as owner in all subscriptions
       const subscriptionsWithOwner = data.map(subscription => ({
         ...subscription,
         people: ensureOwnerMember(subscription.people || [])
@@ -80,7 +80,7 @@ const Subscriptions = ({ user }) => {
 
   const handleAddSubscription = async (subscriptionData) => {
     try {
-      // Ensure Giuseppe is always added as owner member
+      // Ensure Tu is always added as owner member
       const subscriptionWithOwner = {
         ...subscriptionData,
         people: ensureOwnerMember(subscriptionData.people || [])
