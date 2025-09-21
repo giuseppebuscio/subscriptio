@@ -15,7 +15,8 @@ import {
   Moon,
   User,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  LogOut
 } from 'lucide-react';
 import Badge from './Badge';
 
@@ -38,7 +39,8 @@ const Sidebar = ({
   onMobileClose,
   notifications = [], 
   currentTheme = 'light',
-  onThemeToggle
+  onThemeToggle,
+  onLogout
 }) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -457,6 +459,26 @@ const Sidebar = ({
                 <User className="h-4 w-4" />
                 {!isCollapsed && (
                   <span className="text-sm font-normal">Account</span>
+                )}
+              </button>
+            </motion.div>
+
+            {/* Logout */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <button 
+                onClick={onLogout}
+                className={`nav-link w-full ${
+                  isCollapsed ? 'justify-center' : 'justify-start'
+                } hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400`} 
+                title={isCollapsed ? 'Logout' : ''}
+              >
+                <LogOut className="h-4 w-4" />
+                {!isCollapsed && (
+                  <span className="text-sm font-normal">Logout</span>
                 )}
               </button>
             </motion.div>

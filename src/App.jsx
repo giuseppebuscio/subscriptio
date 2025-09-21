@@ -5,6 +5,10 @@ import Sidebar from './components/Sidebar';
 import Modal from './components/Modal';
 import Button from './components/Button';
 import ExpiringSubscriptionsModal from './components/ExpiringSubscriptionsModal';
+import AuthModal from './components/AuthModal';
+import WelcomePage from './pages/WelcomePage';
+import RegisterPage from './pages/RegisterPage';
+import { useAuth } from './hooks/useAuth';
 import { 
   CreditCard, 
   AlertTriangle,
@@ -32,6 +36,7 @@ import Inbox from './pages/Inbox';
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading: authLoading, login, register, logout } = useAuth();
   const [theme, setTheme] = useState('light');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -41,6 +46,11 @@ function App() {
   const [showExpiringSubscriptions, setShowExpiringSubscriptions] = useState(false);
   const [expiringSubscriptions, setExpiringSubscriptions] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+  const [authError, setAuthError] = useState('');
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState('login'); // 'login' or 'register'
 
   useEffect(() => {
     // Initialize theme
@@ -253,6 +263,125 @@ function App() {
     alert(`Promemoria inviato per il pagamento di ${payment.subscriptionName}`);
   };
 
+  // Auth handlers
+  const handleLogin = async (formData) => {
+    setIsAuthSubmitting(true);
+    setAuthError('');
+
+    try {
+      const result = await login(formData.email, formData.password);
+      
+      if (result.success) {
+        setAuthError('');
+      } else {
+        setAuthError(result.error);
+      }
+    } catch (error) {
+      setAuthError('Si è verificato un errore. Riprova.');
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleRegister = () => {
+    setCurrentPage('register');
+    setAuthError('');
+  };
+
+  const handleBackToLogin = () => {
+    setCurrentPage('login');
+    setAuthError('');
+  };
+
+  const handleRegisterSubmit = async (formData) => {
+    setIsAuthSubmitting(true);
+    setAuthError('');
+
+    try {
+      const result = await register(formData.email, formData.password);
+      
+      if (result.success) {
+        setAuthError('');
+      } else {
+        setAuthError(result.error);
+      }
+    } catch (error) {
+      setAuthError('Si è verificato un errore. Riprova.');
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleAuthSubmit = async (formData) => {
+    setIsAuthSubmitting(true);
+    setAuthError('');
+
+    try {
+      let result;
+      if (authMode === 'login') {
+        result = await login(formData.email, formData.password);
+      } else {
+        result = await register(formData.email, formData.password);
+      }
+
+      if (result.success) {
+        setShowAuthModal(false);
+        setAuthError('');
+      } else {
+        setAuthError(result.error);
+      }
+    } catch (error) {
+      setAuthError('Si è verificato un errore. Riprova.');
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleAuthModeSwitch = () => {
+    setAuthMode(authMode === 'login' ? 'register' : 'login');
+    setAuthError('');
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
+  // Show loading screen while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Caricamento...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show welcome page if user is not authenticated
+  if (!user) {
+    if (currentPage === 'register') {
+      return (
+        <RegisterPage 
+          onRegister={handleRegisterSubmit}
+          onBackToLogin={handleBackToLogin}
+          error={authError}
+          isLoading={isAuthSubmitting}
+        />
+      );
+    }
+    
+    return (
+      <WelcomePage 
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        error={authError}
+        isLoading={isAuthSubmitting}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen bg-white dark:bg-black transition-colors duration-200 ${theme}`}>
         <div className="flex h-screen relative">
@@ -274,6 +403,7 @@ function App() {
             notifications={notifications}
             currentTheme={theme}
             onThemeToggle={handleThemeToggle}
+            onLogout={handleLogout}
           />
           
           <main className="flex-1 overflow-y-auto content-padding">
@@ -395,6 +525,17 @@ function App() {
           onClose={() => setShowExpiringSubscriptions(false)}
           expiringSubscriptions={expiringSubscriptions}
           onViewSubscription={handleViewSubscription}
+        />
+
+        {/* Auth Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          mode={authMode}
+          onSwitchMode={handleAuthModeSwitch}
+          onSubmit={handleAuthSubmit}
+          loading={isAuthSubmitting}
+          error={authError}
         />
       </div>
   );
