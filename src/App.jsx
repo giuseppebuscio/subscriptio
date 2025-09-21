@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { paymentsRepo } from './repositories/paymentsRepo';
 import subscriptionsRepo from './repositories/subscriptionsRepo';
+import { notificationsRepo } from './repositories/notificationsRepo';
 import { upcomingDuePayments, getExpiringSubscriptions } from './utils/finance';
 import { formatDate } from './utils/dates';
 
@@ -26,6 +27,7 @@ import People from './pages/People';
 import Settings from './pages/Settings';
 import Help from './pages/Help';
 import SubscriptionDetail from './pages/SubscriptionDetail';
+import Inbox from './pages/Inbox';
 
 function App() {
   const navigate = useNavigate();
@@ -45,6 +47,9 @@ function App() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
     document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    
+    // Load existing notifications
+    loadNotifications();
     
     // Check for upcoming payments and expiring subscriptions on app load
     checkUpcomingPayments();
@@ -75,6 +80,15 @@ function App() {
     checkExpiringSubscriptions();
   }, [location.pathname]);
 
+  const loadNotifications = async () => {
+    try {
+      const existingNotifications = await notificationsRepo.list();
+      setNotifications(existingNotifications);
+    } catch (error) {
+      console.error('Errore nel caricamento delle notifiche:', error);
+    }
+  };
+
   const checkUpcomingPayments = async () => {
     try {
       const payments = await paymentsRepo.list();
@@ -84,17 +98,21 @@ function App() {
         setUpcomingPayments(upcoming);
         setShowUpcomingPayments(true);
         
-        // Add notifications
-        const newNotifications = upcoming.map(payment => ({
-          id: `payment-${payment.id}`,
-          type: 'payment_due',
-          title: 'Pagamento in Scadenza',
-          message: `Il pagamento per ${payment.subscriptionName} scade il ${formatDate(payment.dateDue)}`,
-          timestamp: new Date().toISOString(),
-          read: false
-        }));
+        // Check existing notifications to avoid duplicates
+        const existingNotifications = await notificationsRepo.list();
+        const existingPaymentIds = existingNotifications
+          .filter(n => n.type === 'payment_due')
+          .map(n => n.subscriptionId);
         
-        setNotifications(prev => [...prev, ...newNotifications]);
+        // Add notifications only for new payments
+        for (const payment of upcoming) {
+          if (!existingPaymentIds.includes(payment.subscriptionId)) {
+            await notificationsRepo.createPaymentDueNotification(payment);
+          }
+        }
+        
+        // Reload notifications
+        await loadNotifications();
       }
     } catch (error) {
       // Gestione silenziosa dell'errore
@@ -118,17 +136,21 @@ function App() {
           setShowExpiringSubscriptions(false);
         }
         
-        // Add notifications for expiring subscriptions
-        const newNotifications = expiring.map(subscription => ({
-          id: `subscription-${subscription.id}`,
-          type: 'subscription_expiring',
-          title: 'Abbonamento in Scadenza',
-          message: `${subscription.name} si rinnova tra ${subscription.daysUntilRenewal} giorni`,
-          timestamp: new Date().toISOString(),
-          read: false
-        }));
+        // Check existing notifications to avoid duplicates
+        const existingNotifications = await notificationsRepo.list();
+        const existingSubscriptionIds = existingNotifications
+          .filter(n => n.type === 'subscription_expiring')
+          .map(n => n.subscriptionId);
         
-        setNotifications(prev => [...prev, ...newNotifications]);
+        // Add notifications only for new subscriptions
+        for (const subscription of expiring) {
+          if (!existingSubscriptionIds.includes(subscription.id)) {
+            await notificationsRepo.createSubscriptionExpiringNotification(subscription);
+          }
+        }
+        
+        // Reload notifications
+        await loadNotifications();
       } else {
         // Se non ci sono abbonamenti in scadenza, nascondi il modal
         setShowExpiringSubscriptions(false);
@@ -167,11 +189,12 @@ function App() {
     }
   }, [location.pathname, isMobile]);
 
-  const handleNotificationClick = (notification) => {
-    // Mark as read
-    setNotifications(prev => 
-      prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
-    );
+  const handleNotificationClick = async (notification) => {
+    // Mark as read using repository
+    await notificationsRepo.markAsRead(notification.id);
+    
+    // Reload notifications
+    await loadNotifications();
     
     // Handle different notification types
     switch (notification.type) {
@@ -207,10 +230,11 @@ function App() {
       // Remove from upcoming payments
       setUpcomingPayments(prev => prev.filter(p => p.id !== paymentId));
       
-      // Update notifications
-      setNotifications(prev => 
-        prev.map(n => n.id === `payment-${paymentId}` ? { ...n, read: true } : n)
-      );
+      // Delete related notification instead of just marking as read
+      await notificationsRepo.deleteByPaymentId(paymentId);
+      
+      // Reload notifications
+      await loadNotifications();
       
       // If no more upcoming payments, close modal
       if (upcomingPayments.length <= 1) {
@@ -247,7 +271,6 @@ function App() {
             notifications={notifications}
             currentTheme={theme}
             onThemeToggle={handleThemeToggle}
-            onNotificationClick={handleNotificationClick}
           />
           
           <main className="flex-1 overflow-y-auto content-padding">
@@ -261,6 +284,22 @@ function App() {
               <Route path="/people" element={<People />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/help" element={<Help />} />
+              <Route path="/inbox" element={<Inbox 
+                notifications={notifications}
+                onNotificationClick={handleNotificationClick}
+                onMarkAsRead={async (id) => {
+                  await notificationsRepo.markAsRead(id);
+                  await loadNotifications();
+                }}
+                onMarkAllAsRead={async () => {
+                  await notificationsRepo.markAllAsRead();
+                  await loadNotifications();
+                }}
+                onDeleteNotification={async (id) => {
+                  await notificationsRepo.delete(id);
+                  await loadNotifications();
+                }}
+              />} />
               <Route path="/subscription/:id" element={<SubscriptionDetail />} />
             </Routes>
           </main>
