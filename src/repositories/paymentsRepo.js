@@ -18,8 +18,10 @@ class PaymentsRepository {
    * Initialize storage (empty by default)
    */
   initializeStorage() {
-    // Force clear existing mock data and start fresh
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    // Only initialize if no data exists, don't clear existing data
+    if (!localStorage.getItem(STORAGE_KEY)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    }
   }
 
   /**
