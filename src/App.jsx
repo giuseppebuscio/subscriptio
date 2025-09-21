@@ -127,11 +127,14 @@ function App() {
       if (expiring.length > 0) {
         setExpiringSubscriptions(expiring);
         
-        // Mostra il modal solo se siamo nella dashboard
+        // Mostra il modal solo se siamo nella dashboard E non è stato mostrato oggi
         const isDashboard = location.pathname === '/';
+        const hasShownToday = await notificationsRepo.hasShownExpiringModalToday();
         
-        if (isDashboard) {
+        if (isDashboard && !hasShownToday) {
           setShowExpiringSubscriptions(true);
+          // Segna che il modal è stato mostrato oggi
+          await notificationsRepo.markExpiringModalShownToday();
         } else {
           setShowExpiringSubscriptions(false);
         }
@@ -326,11 +329,11 @@ function App() {
                   {upcomingPayments.map((payment) => (
                     <div
                       key={payment.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl"
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-2xl"
                     >
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
-                          <CreditCard className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+                          <CreditCard className="h-5 w-5 text-[rgb(34,34,34)] dark:text-gray-100" />
                         </div>
                         <div>
                           <h4 className="font-medium text-black dark:text-white">

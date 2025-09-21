@@ -625,7 +625,7 @@ const SubscriptionDetail = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 activeTab === tab.id
-                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  ? 'bg-white dark:bg-[rgb(34,34,34)] text-[rgb(34,34,34)] dark:text-white shadow-sm dark:hover:bg-[rgb(25,25,25)]'
                   : 'text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -686,12 +686,12 @@ const SubscriptionDetail = () => {
                 <CardBody>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Nome Abbonamento */}
-                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
                       <label className="text-sm text-gray-500 dark:text-gray-400">
                         Nome abbonamento
                       </label>
                       {!isEditing ? (
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        <p className="text-lg font-bold text-[rgb(34,34,34)] dark:text-gray-100">
                           {subscription.name || 'Non specificato'}
                         </p>
                       ) : (
@@ -715,12 +715,12 @@ const SubscriptionDetail = () => {
                     </div>
                     
 
-                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
                       <label className="text-sm text-gray-500 dark:text-gray-400">
                         Rinnovo abbonamento
                       </label>
                       {!isEditing ? (
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        <p className="text-lg font-bold text-[rgb(34,34,34)] dark:text-gray-100">
                           {subscription.renewalDay ? `Ogni ${subscription.renewalDay}° del mese` : 'Non specificato'}
                         </p>
                       ) : (
@@ -737,13 +737,13 @@ const SubscriptionDetail = () => {
                       )}
                     </div>
                     
-                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
                       <label className="text-sm text-gray-500 dark:text-gray-400">
                         Costo dell'abbonamento
                       </label>
                       {!isEditing ? (
                         <div className="flex items-end space-x-2">
-                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                          <p className="text-lg font-bold text-[rgb(34,34,34)] dark:text-gray-100">
                             €{subscription.amount}
                           </p>
                         </div>
@@ -787,13 +787,13 @@ const SubscriptionDetail = () => {
                     {subscription.people && subscription.people.length > 0 ? (
                       <div className="space-y-3">
                         {subscription.people.map((person, index) => (
-                          <div key={person.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <div key={person.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
                             <div className="flex items-center space-x-3">
                               <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
                                 <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                               </div>
                               <div>
-                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                <span className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                                   {person.name}
                                 </span>
                                 {isOwner(person) && (
@@ -844,15 +844,15 @@ const SubscriptionDetail = () => {
                   <CardBody>
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
                           <p className="text-sm text-gray-500 dark:text-gray-400">Numero pagamenti</p>
-                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                          <p className="text-lg font-bold text-[rgb(34,34,34)] dark:text-gray-100">
                             {payments.length}
                           </p>
                         </div>
-                        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
                           <p className="text-sm text-gray-500 dark:text-gray-400">Quota pagata</p>
-                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                          <p className="text-lg font-bold text-[rgb(34,34,34)] dark:text-gray-100">
                             €{(() => {
                               if (!subscription || !subscription.people || subscription.people.length === 0) {
                                 return payments.reduce((total, payment) => total + (payment.amount || 0), 0).toFixed(2);
@@ -902,13 +902,13 @@ const SubscriptionDetail = () => {
                   {subscription.people && subscription.people.length > 0 ? (
                     <div className="space-y-3">
                       {subscription.people.map((person, index) => (
-                        <div key={person.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div key={person.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
                               <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                             </div>
                             <div>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                              <span className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                                 {person.name}
                               </span>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -982,7 +982,7 @@ const SubscriptionDetail = () => {
                     {/* Stato Abbonamento */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                        <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                           Abbonamento {subscription.status === 'active' ? 'attivo' : 'non attivo'}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1023,12 +1023,12 @@ const SubscriptionDetail = () => {
                     </div>
 
                     {/* Separatore */}
-                    <div className="border-t border-gray-200 dark:border-gray-900"></div>
+                    <div className="border-t border-gray-200 dark:border-[rgb(34,34,34)]"></div>
 
                     {/* Notifiche */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                        <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                           Notifiche {subscription.notificationsEnabled ? 'attive' : 'non attive'}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1058,12 +1058,12 @@ const SubscriptionDetail = () => {
                     </div>
 
                     {/* Separatore */}
-                    <div className="border-t border-gray-200 dark:border-gray-900"></div>
+                    <div className="border-t border-gray-200 dark:border-[rgb(34,34,34)]"></div>
 
                     {/* Contabilizzazione */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                        <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                           Contabilizzazione {subscription.accountingEnabled ? 'attiva' : 'non attiva'}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1103,12 +1103,12 @@ const SubscriptionDetail = () => {
                 </CardHeader>
                 <CardBody className="pt-2">
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center relative overflow-hidden">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-[rgb(34,34,34)] rounded-2xl flex items-center justify-center relative overflow-hidden">
                       {getLogoIcon(subscription.logo)}
                       <Smartphone className="h-12 h-12 text-gray-400 absolute fallback-icon" style={{ display: 'none' }} />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                      <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                         Logo Attuale
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1244,7 +1244,7 @@ const SubscriptionDetail = () => {
               <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <h3 className="text-lg font-semibold text-[rgb(34,34,34)] dark:text-gray-100">
                 Elimina pagamento
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1269,7 +1269,7 @@ const SubscriptionDetail = () => {
               variant="secondary"
               size="sm"
               onClick={confirmDeletePayment}
-              className="bg-black hover:bg-gray-800 text-white border-black hover:border-gray-800"
+              className="bg-black hover:bg-[rgb(25,25,25)] text-white border-black hover:border-[rgb(25,25,25)]"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Elimina
@@ -1285,7 +1285,7 @@ const SubscriptionDetail = () => {
 const SubscriptionHeader = ({ subscription, onEdit, onDelete, onChangeLogo, getLogoIcon }) => (
   <div className="flex items-start justify-between mb-8">
     <div className="flex items-center space-x-4">
-      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center relative overflow-hidden">
+      <div className="w-16 h-16 bg-gray-100 dark:bg-[rgb(34,34,34)] rounded-2xl flex items-center justify-center relative overflow-hidden">
         {getLogoIcon(subscription.logo)}
         <Smartphone className="w-12 h-12 text-gray-400 absolute fallback-icon" style={{ display: 'none' }} />
       </div>
@@ -1323,7 +1323,7 @@ const SubscriptionInfoCard = ({ subscription, translateRecurrenceType }) => (
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
             Tipo Abbonamento
           </label>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-1">
+          <p className="text-lg font-semibold text-[rgb(34,34,34)] dark:text-gray-100 mt-1">
             {translateRecurrenceType(subscription.type)}
           </p>
         </div>
@@ -1332,7 +1332,7 @@ const SubscriptionInfoCard = ({ subscription, translateRecurrenceType }) => (
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
             Importo
           </label>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-1">
+          <p className="text-lg font-semibold text-[rgb(34,34,34)] dark:text-gray-100 mt-1">
             €{subscription.amount}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1344,7 +1344,7 @@ const SubscriptionInfoCard = ({ subscription, translateRecurrenceType }) => (
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
             Prossima Scadenza
           </label>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-1">
+          <p className="text-lg font-semibold text-[rgb(34,34,34)] dark:text-gray-100 mt-1">
             {formatDate(subscription.nextDue)}
           </p>
         </div>
@@ -1353,7 +1353,7 @@ const SubscriptionInfoCard = ({ subscription, translateRecurrenceType }) => (
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
             Durata
           </label>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-1">
+          <p className="text-lg font-semibold text-[rgb(34,34,34)] dark:text-gray-100 mt-1">
                                     {subscription.duration === '∞' ? 'Senza scadenza' : formatDate(subscription.duration)}
           </p>
         </div>
@@ -1448,7 +1448,7 @@ const CurrentMonthPayment = ({ subscription, onMarkAsPaid }) => {
                     <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                    <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                       {month.month} {month.year}
                     </p>
                     <p className="text-sm text-red-600 dark:text-red-400">
@@ -1488,7 +1488,7 @@ const CurrentMonthPayment = ({ subscription, onMarkAsPaid }) => {
                 <CheckCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
               </div>
               <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
+                <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                   Hai già pagato {currentMonthInfo.month} {currentMonthInfo.year}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1512,12 +1512,12 @@ const CurrentMonthPayment = ({ subscription, onMarkAsPaid }) => {
           <h3 className="h3">Pagamenti in corso</h3>
         </CardHeader>
         <CardBody>
-          <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
+          <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-xl">
             <div className="text-center">
               <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="h-6 w-6 text-gray-600 dark:text-gray-400" />
               </div>
-              <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              <p className="text-lg font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                 Sei in pari con tutti i pagamenti
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1543,7 +1543,7 @@ const CurrentMonthPayment = ({ subscription, onMarkAsPaid }) => {
                 <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
+                <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                   Hai pagato {currentMonthInfo.month} {currentMonthInfo.year}?
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1572,12 +1572,12 @@ const CurrentMonthPayment = ({ subscription, onMarkAsPaid }) => {
           <h3 className="h3">Pagamenti in corso</h3>
         </CardHeader>
         <CardBody>
-          <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
+          <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-xl">
           <div className="text-center">
                           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="h-6 w-6 text-gray-600 dark:text-gray-400" />
             </div>
-            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-lg font-medium text-[rgb(34,34,34)] dark:text-gray-100">
               Sei in pari con tutti i pagamenti
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1601,7 +1601,7 @@ const CurrentMonthPayment = ({ subscription, onMarkAsPaid }) => {
               <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
             <div>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
+              <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                 Hai pagato {monthInfo.month} {monthInfo.year}?
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1641,7 +1641,7 @@ const PaymentHistory = ({ payments }) => {
       <div className="space-y-3">
           {payments && payments.length > 0 ? (
             payments.map((payment) => (
-          <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
             <div className="flex items-center space-x-3">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 payment.status === 'completed' 
@@ -1655,7 +1655,7 @@ const PaymentHistory = ({ payments }) => {
                 )}
               </div>
               <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
+                <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                   €{payment.amount}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1772,13 +1772,13 @@ const UpcomingPayments = ({ payments }) => (
           <>
             {/* Mostra solo i primi 3 pagamenti */}
             {payments.slice(0, 3).map((payment) => (
-          <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
             <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                     <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </div>
               <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
+                <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                       €{payment.amount || 0}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -2040,13 +2040,13 @@ const AllPaymentsSection = ({ payments, loading, onAddPayment, onEditPayment, on
              {sortedPayments.map((payment) => {
                try {
                  return (
-                   <div key={payment.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                   <div key={payment.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-lg">
                      <div className="flex items-center space-x-4">
-                       <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                       <div className="w-10 h-10 bg-gray-100 dark:bg-[rgb(34,34,34)] rounded-full flex items-center justify-center">
                          <CheckCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                        </div>
                        <div>
-                         <p className="font-medium text-gray-900 dark:text-gray-100">
+                         <p className="font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                            Hai pagato: €{(() => {
                              if (!subscription || !subscription.people || subscription.people.length === 0) {
                                return (payment.amount || 0).toFixed(2);
@@ -2103,7 +2103,7 @@ const AllPaymentsSection = ({ payments, loading, onAddPayment, onEditPayment, on
                      </div>
                      <div className="flex items-center space-x-4">
                        <div className="text-right">
-                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                         <p className="text-sm font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                            {payment.date ? formatDate(payment.date) : 'Data non disponibile'}
                          </p>
                        </div>
@@ -2223,18 +2223,18 @@ const AddPaymentModal = ({ isOpen, onClose, onSave, subscription }) => {
             <div className="space-y-2">
               {subscription && subscription.people ? (
                 subscription.people.map((person) => (
-                  <label key={person.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer">
+                  <label key={person.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-[rgb(25,25,25)] rounded-lg cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.people.includes(person.name)}
                       onChange={() => togglePerson(person.name)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-[rgb(34,34,34)] focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                     />
                     <div className="flex items-center space-x-2">
                       <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
                         <User className="h-3 w-3 text-gray-600 dark:text-gray-400" />
                       </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <span className="text-sm font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                         {person.name}
                       </span>
                       {isOwner(person) && (
@@ -2374,18 +2374,18 @@ const EditPaymentModal = ({ isOpen, onClose, onSave, payment, subscription }) =>
             <div className="space-y-2">
               {subscription && subscription.people ? (
                 subscription.people.map((person) => (
-                  <label key={person.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer">
+                  <label key={person.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-[rgb(25,25,25)] rounded-lg cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.people.includes(person.name)}
                       onChange={() => togglePerson(person.name)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-[rgb(34,34,34)] focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                     />
                     <div className="flex items-center space-x-2">
                       <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
                         <User className="h-3 w-3 text-gray-600 dark:text-gray-400" />
                       </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <span className="text-sm font-medium text-[rgb(34,34,34)] dark:text-gray-100">
                         {person.name}
                       </span>
                       {isOwner(person) && (
@@ -2434,9 +2434,9 @@ const ShareLinkPopup = ({ isOpen, onClose, shareLink, onCopyLink }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+      <div className="bg-white dark:bg-[rgb(34,34,34)] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="text-lg font-semibold text-[rgb(34,34,34)] dark:text-gray-100">
             Condividi abbonamento
           </h3>
           <button

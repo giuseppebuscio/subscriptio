@@ -101,7 +101,7 @@ const Help = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
+      <div className="flex space-x-1 bg-gray-100 dark:bg-[rgb(34,34,34)] p-1 rounded-2xl">
         {tabs.map((tab) => {
           const IconComponent = tab.icon;
           return (
@@ -110,7 +110,7 @@ const Help = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 activeTab === tab.id
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  ? 'bg-white dark:bg-gray-700 text-[rgb(34,34,34)] dark:text-white shadow-sm dark:hover:bg-gray-600'
                   : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -167,9 +167,9 @@ const Help = () => {
                   <div className="space-y-4">
                     <h4 className="h4">3. Configura le Impostazioni</h4>
                     <div className="card-grid-3">
-                      <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <div className="text-center p-4 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-2xl">
                         <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-3">
-                          <Calendar className="h-6 w-6 text-gray-900 dark:text-gray-100" />
+                          <Calendar className="h-6 w-6 text-[rgb(34,34,34)] dark:text-gray-100" />
                         </div>
                         <h5 className="font-medium mb-2">Imposta Promemoria</h5>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -177,9 +177,9 @@ const Help = () => {
                         </p>
                       </div>
                       
-                      <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <div className="text-center p-4 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-2xl">
                         <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-3">
-                          <Settings className="h-6 w-6 text-gray-900 dark:text-gray-100" />
+                          <Settings className="h-6 w-6 text-[rgb(34,34,34)] dark:text-gray-100" />
                         </div>
                         <h5 className="font-medium mb-2">Scegli il Tema</h5>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -187,9 +187,9 @@ const Help = () => {
                         </p>
                       </div>
                       
-                      <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <div className="text-center p-4 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-2xl">
                         <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-3">
-                          <Download className="h-6 w-6 text-gray-900 dark:text-gray-100" />
+                          <Download className="h-6 w-6 text-[rgb(34,34,34)] dark:text-gray-100" />
                         </div>
                         <h5 className="font-medium mb-2">Esporta Dati</h5>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -220,13 +220,13 @@ const Help = () => {
                       return (
                         <motion.div
                           key={index}
-                          className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl text-center"
+                          className="p-6 bg-gray-50 dark:bg-[rgb(34,34,34)] rounded-2xl text-center"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
                           <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <IconComponent className="h-8 w-8 text-gray-900 dark:text-gray-100" />
+                            <IconComponent className="h-8 w-8 text-[rgb(34,34,34)] dark:text-gray-100" />
                           </div>
                           <h4 className="h4 mb-2">{feature.title}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -287,7 +287,7 @@ const Help = () => {
                 </CardHeader>
                 <CardBody className="space-y-6">
                   <div className="text-center">
-                    <div className="w-24 h-24 bg-gray-900 dark:bg-white rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <div className="w-24 h-24 bg-[rgb(34,34,34)] dark:bg-white rounded-3xl flex items-center justify-center mx-auto mb-6">
                       <span className="text-white dark:text-black text-3xl font-bold">S</span>
                     </div>
                     <h4 className="h2 mb-2">SUBSCRIPTIO</h4>

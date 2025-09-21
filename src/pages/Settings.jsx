@@ -145,7 +145,7 @@ const Settings = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
+      <div className="flex space-x-1 bg-gray-100 dark:bg-[rgb(34,34,34)] p-1 rounded-2xl">
         {tabs.map((tab) => {
           const IconComponent = tab.icon;
           return (
@@ -154,7 +154,7 @@ const Settings = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 activeTab === tab.id
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  ? 'bg-white dark:bg-gray-700 text-[rgb(34,34,34)] dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -193,7 +193,7 @@ const Settings = () => {
                         onClick={() => handleSettingChange('theme', 'light')}
                         className={`flex items-center space-x-2 px-4 py-2 rounded-xl border-2 transition-all ${
                           settings.theme === 'light'
-                            ? 'border-gray-900 bg-gray-900 text-white'
+                            ? 'border-[rgb(34,34,34)] bg-[rgb(34,34,34)] text-white hover:bg-[rgb(25,25,25)] hover:border-[rgb(25,25,25)]'
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                         }`}
                       >
@@ -204,7 +204,7 @@ const Settings = () => {
                         onClick={() => handleSettingChange('theme', 'dark')}
                         className={`flex items-center space-x-2 px-4 py-2 rounded-xl border-2 transition-all ${
                           settings.theme === 'dark'
-                            ? 'border-gray-900 bg-gray-900 text-white'
+                            ? 'border-[rgb(34,34,34)] bg-[rgb(34,34,34)] text-white hover:bg-[rgb(25,25,25)] hover:border-[rgb(25,25,25)]'
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                         }`}
                       >
@@ -215,7 +215,7 @@ const Settings = () => {
                         onClick={() => handleSettingChange('theme', 'auto')}
                         className={`flex items-center space-x-2 px-4 py-2 rounded-xl border-2 transition-all ${
                           settings.theme === 'auto'
-                            ? 'border-gray-900 bg-gray-900 text-white'
+                            ? 'border-[rgb(34,34,34)] bg-[rgb(34,34,34)] text-white hover:bg-[rgb(25,25,25)] hover:border-[rgb(25,25,25)]'
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                         }`}
                       >
@@ -280,8 +280,8 @@ const Settings = () => {
                           onClick={() => handleSettingChange('reminderDays', days)}
                           className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                             settings.reminderDays === days
-                              ? 'bg-gray-900 text-white'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                              ? 'bg-[rgb(34,34,34)] text-white hover:bg-[rgb(25,25,25)]'
+                              : 'bg-gray-100 dark:bg-[rgb(34,34,34)] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[rgb(25,25,25)]'
                           }`}
                         >
                           {days} giorno{days !== 1 ? 'i' : ''}
@@ -458,13 +458,13 @@ const Settings = () => {
                   </div>
 
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <h4 className="h4 mb-4 text-gray-900 dark:text-gray-100">Zona Pericolo</h4>
+                    <h4 className="h4 mb-4 text-[rgb(34,34,34)] dark:text-gray-100">Zona Pericolo</h4>
                     
-                    <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4">
+                    <div className="bg-gray-50 dark:bg-[rgb(34,34,34)] border border-gray-200 dark:border-gray-700 rounded-2xl p-4">
                       <div className="flex items-start space-x-3">
                         <RotateCcw className="h-5 w-5 text-gray-700 mt-0.5" />
                         <div className="flex-1">
-                          <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                          <h5 className="font-medium text-[rgb(34,34,34)] dark:text-gray-100 mb-1">
                             Resetta Tutti i Dati
                           </h5>
                           <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">

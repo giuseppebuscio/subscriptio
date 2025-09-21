@@ -55,7 +55,7 @@ const Modal = ({
         
         {/* Modal Content */}
         <motion.div
-          className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg ${sizeClasses[size]} w-full ${className}`}
+          className={`relative bg-white dark:bg-[rgb(34,34,34)] rounded-2xl shadow-lg ${sizeClasses[size]} w-full ${className}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
@@ -64,7 +64,7 @@ const Modal = ({
           {/* Header */}
           {title && (
             <div className="p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="h3 text-gray-900 dark:text-gray-50">
+              <h2 className="h3 text-[rgb(34,34,34)] dark:text-gray-50">
                 {title}
               </h2>
               {showCloseButton && (

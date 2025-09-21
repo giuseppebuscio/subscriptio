@@ -196,13 +196,13 @@ const Subscriptions = () => {
         </select>
         
         {/* View Toggle */}
-        <div className="flex border border-gray-300 dark:border-gray-900 rounded-xl overflow-hidden">
+        <div className="flex border border-gray-300 dark:border-[rgb(34,34,34)] rounded-xl overflow-hidden">
           <button
             onClick={() => setViewMode('grid')}
             className={`px-4 py-2 text-sm font-medium transition-all duration-200 flex items-center justify-center ${
               viewMode === 'grid'
-                ? 'bg-gray-900 text-white'
-                : 'bg-white dark:bg-black text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
+                ? 'bg-[rgb(34,34,34)] text-white hover:bg-[rgb(25,25,25)]'
+                : 'bg-white dark:bg-black text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[rgb(25,25,25)]'
             }`}
           >
             <Grid3X3 className="h-4 w-4" />
@@ -211,8 +211,8 @@ const Subscriptions = () => {
             onClick={() => setViewMode('list')}
             className={`px-4 py-2 text-sm font-medium transition-all duration-200 flex items-center justify-center ${
               viewMode === 'list'
-                ? 'bg-gray-900 text-white'
-                : 'bg-white dark:bg-black text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
+                ? 'bg-[rgb(34,34,34)] text-white hover:bg-[rgb(25,25,25)]'
+                : 'bg-white dark:bg-black text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[rgb(25,25,25)]'
             }`}
           >
             <List className="h-4 w-4" />
@@ -324,7 +324,7 @@ const SubscriptionCard = ({ subscription, onDelete, translateRecurrenceType, onT
           <button
             onClick={handleToggleStatus}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
-              subscription.status === 'active' ? 'bg-gray-900' : 'bg-gray-200 dark:bg-gray-700'
+              subscription.status === 'active' ? 'bg-[rgb(34,34,34)]' : 'bg-gray-200 dark:bg-gray-700'
             }`}
             title={subscription.status === 'active' ? 'Disattiva abbonamento' : 'Attiva abbonamento'}
           >
@@ -338,7 +338,7 @@ const SubscriptionCard = ({ subscription, onDelete, translateRecurrenceType, onT
         
         <div className="mb-3">
           <h3 className={`h4 mb-2 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>{subscription.name}</h3>
-          <div className={`text-2xl font-bold ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-gray-100'}`}>
+          <div className={`text-2xl font-bold ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : 'text-[rgb(34,34,34)] dark:text-gray-100'}`}>
             €{subscription.amount}
           </div>
           <div className={`text-sm text-gray-500 dark:text-gray-400 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>
@@ -392,8 +392,8 @@ const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType, onTo
       <CardBody>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 flex-1">
-            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
-              <Smartphone className="h-6 w-6 text-gray-900 dark:text-gray-100" />
+            <div className="w-12 h-12 bg-gray-100 dark:bg-[rgb(34,34,34)] rounded-xl flex items-center justify-center">
+              <Smartphone className="h-6 w-6 text-[rgb(34,34,34)] dark:text-gray-100" />
             </div>
             
             <div className="flex-1 min-w-0">
@@ -403,7 +403,7 @@ const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType, onTo
                   {subscription.category}
                 </Badge>
               </div>
-              <div className={`text-lg font-bold mb-1 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-gray-100'}`}>
+              <div className={`text-lg font-bold mb-1 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : 'text-[rgb(34,34,34)] dark:text-gray-100'}`}>
                 €{subscription.amount}
               </div>
               <div className={`text-sm text-gray-500 dark:text-gray-400 ${subscription.status === 'inactive' ? 'text-gray-400 dark:text-gray-600' : ''}`}>
@@ -424,7 +424,7 @@ const SubscriptionRow = ({ subscription, onDelete, translateRecurrenceType, onTo
             <button
               onClick={handleToggleStatus}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
-                subscription.status === 'active' ? 'bg-gray-900' : 'bg-gray-200 dark:bg-gray-700'
+                subscription.status === 'active' ? 'bg-[rgb(34,34,34)]' : 'bg-gray-200 dark:bg-gray-700'
               }`}
               title={subscription.status === 'active' ? 'Disattiva abbonamento' : 'Attiva abbonamento'}
             >

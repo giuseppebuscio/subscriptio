@@ -53,7 +53,7 @@ const Sidebar = ({
       {/* Mobile Sidebar - Always visible when collapsed, expanded when open */}
       {isMobile && (
         <motion.aside
-          className={`bg-gray-100 dark:bg-black border-r border-gray-200 dark:border-gray-900 flex flex-col h-screen transition-all duration-300 ${
+          className={`bg-gray-100 dark:bg-black border-r border-gray-200 dark:border-[rgb(34,34,34)] flex flex-col h-screen transition-all duration-300 ${
             isMobileOpen 
               ? 'fixed top-0 left-0 z-50 w-64 h-1/2 translate-x-0' 
               : 'w-16 sidebar-collapsed'
@@ -70,7 +70,7 @@ const Sidebar = ({
             // Expanded mobile sidebar
             <>
               {/* Header della sidebar */}
-              <div className="border-b border-gray-200 dark:border-gray-900 px-2 py-4">
+              <div className="border-b border-gray-200 dark:border-[rgb(34,34,34)] px-2 py-4">
                 <motion.div
                   className="flex items-center justify-between"
                   initial={{ opacity: 0 }}
@@ -82,7 +82,7 @@ const Sidebar = ({
                   </div>
                   <button 
                     onClick={onMobileClose}
-                    className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-900 rounded-[0.75rem] transition-colors duration-200 flex items-center justify-center p-3"
+                    className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[rgb(25,25,25)] rounded-[0.75rem] transition-colors duration-200 flex items-center justify-center p-3"
                     title="Chiudi"
                   >
                     <PanelLeftClose className="h-4 w-4" />
@@ -117,7 +117,7 @@ const Sidebar = ({
               </nav>
 
               {/* Controlli come menu della sidebar */}
-              <div className="border-t border-gray-200 dark:border-gray-900 p-2 space-y-2">
+              <div className="border-t border-gray-200 dark:border-[rgb(34,34,34)] p-2 space-y-2">
                 {/* Inbox */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
@@ -181,7 +181,7 @@ const Sidebar = ({
               </div>
 
               {/* Copyright */}
-              <div className="border-t border-gray-200 dark:border-gray-900 p-2">
+              <div className="border-t border-gray-200 dark:border-[rgb(34,34,34)] p-2">
                 <motion.div
                   className="text-center text-sm text-gray-500 dark:text-gray-300"
                   initial={{ opacity: 0 }}
@@ -196,7 +196,7 @@ const Sidebar = ({
             // Collapsed mobile sidebar
             <>
               {/* Header della sidebar */}
-              <div className="border-b border-gray-200 dark:border-gray-900 px-2 py-4">
+              <div className="border-b border-gray-200 dark:border-[rgb(34,34,34)] px-2 py-4">
                 <motion.div
                   className="flex items-center justify-center"
                   initial={{ opacity: 0 }}
@@ -205,7 +205,7 @@ const Sidebar = ({
                 >
                   <button 
                     onClick={onToggleCollapse}
-                    className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-900 rounded-[0.75rem] transition-colors duration-200 flex items-center justify-center p-3"
+                    className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[rgb(25,25,25)] rounded-[0.75rem] transition-colors duration-200 flex items-center justify-center p-3"
                     title="Espandi sidebar"
                   >
                     <PanelLeft className="h-4 w-4" />
@@ -239,7 +239,7 @@ const Sidebar = ({
               </nav>
 
               {/* Controlli come menu della sidebar */}
-              <div className="border-t border-gray-200 dark:border-gray-900 p-2 space-y-2">
+              <div className="border-t border-gray-200 dark:border-[rgb(34,34,34)] p-2 space-y-2">
                 {/* Inbox */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
@@ -300,7 +300,7 @@ const Sidebar = ({
               </div>
 
               {/* Copyright */}
-              <div className="border-t border-gray-200 dark:border-gray-900 p-2">
+              <div className="border-t border-gray-200 dark:border-[rgb(34,34,34)] p-2">
                 <motion.div
                   className="text-center text-sm text-gray-500 dark:text-gray-300"
                   initial={{ opacity: 0 }}
@@ -318,7 +318,7 @@ const Sidebar = ({
       {/* Desktop Sidebar - Normal behavior */}
       {!isMobile && (
         <motion.aside
-          className={`bg-gray-100 dark:bg-black border-r border-gray-200 dark:border-gray-900 flex flex-col h-screen transition-all duration-300 ${
+          className={`bg-gray-100 dark:bg-black border-r border-gray-200 dark:border-[rgb(34,34,34)] flex flex-col h-screen transition-all duration-300 ${
             isCollapsed ? 'w-16 sidebar-collapsed' : 'w-64'
           }`}
           initial={{ x: -100, opacity: 0 }}
@@ -326,7 +326,7 @@ const Sidebar = ({
           transition={{ duration: 0.3 }}
         >
           {/* Header della sidebar */}
-          <div className="border-b border-gray-200 dark:border-gray-900 px-2 py-4">
+          <div className="border-b border-gray-200 dark:border-[rgb(34,34,34)] px-2 py-4">
             <motion.div
               className={`flex items-center ${
                 isCollapsed ? 'justify-center' : 'justify-between'
@@ -342,7 +342,7 @@ const Sidebar = ({
               )}
               <button 
                 onClick={onToggleCollapse}
-                className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-900 rounded-[0.75rem] transition-colors duration-200 flex items-center justify-center p-3"
+                className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[rgb(25,25,25)] rounded-[0.75rem] transition-colors duration-200 flex items-center justify-center p-3"
                 title={isCollapsed ? 'Espandi sidebar' : 'Comprimi sidebar'}
               >
                 <PanelLeft className="h-4 w-4" />
@@ -381,7 +381,7 @@ const Sidebar = ({
           </nav>
 
           {/* Controlli come menu della sidebar */}
-          <div className="border-t border-gray-200 dark:border-gray-900 p-2 space-y-2">
+          <div className="border-t border-gray-200 dark:border-[rgb(34,34,34)] p-2 space-y-2">
             {/* Inbox */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -465,7 +465,7 @@ const Sidebar = ({
 
 
           {/* Copyright - Sezione separata */}
-          <div className="border-t border-gray-200 dark:border-gray-900 p-2">
+          <div className="border-t border-gray-200 dark:border-[rgb(34,34,34)] p-2">
             <motion.div
               className="text-center text-sm text-gray-500 dark:text-gray-300"
               initial={{ opacity: 0 }}

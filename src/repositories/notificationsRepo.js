@@ -69,6 +69,13 @@ class NotificationsRepository {
   async delete(id) {
     try {
       const notifications = await this.list();
+      const notificationToDelete = notifications.find(n => n.id === id);
+      
+      if (notificationToDelete) {
+        // Aggiungi alla lista delle notifiche eliminate dall'utente
+        await this.addToDeletedNotifications(notificationToDelete);
+      }
+      
       const filtered = notifications.filter(n => n.id !== id);
       await this.save(filtered);
       return true;
@@ -82,6 +89,13 @@ class NotificationsRepository {
   async deleteBySubscriptionId(subscriptionId) {
     try {
       const notifications = await this.list();
+      const notificationsToDelete = notifications.filter(n => n.subscriptionId === subscriptionId);
+      
+      // Aggiungi alla lista delle notifiche eliminate dall'utente
+      for (const notification of notificationsToDelete) {
+        await this.addToDeletedNotifications(notification);
+      }
+      
       const filtered = notifications.filter(n => n.subscriptionId !== subscriptionId);
       await this.save(filtered);
       return true;
@@ -147,6 +161,12 @@ class NotificationsRepository {
       priority: 'high'
     };
 
+    // Controlla se questa notifica è stata eliminata dall'utente
+    const isDeleted = await this.isNotificationDeleted(notification);
+    if (isDeleted) {
+      return null; // Don't create if user deleted it
+    }
+
     return this.add(notification);
   }
 
@@ -172,6 +192,12 @@ class NotificationsRepository {
       renewalDate: subscription.nextRenewalDate,
       priority: 'medium'
     };
+
+    // Controlla se questa notifica è stata eliminata dall'utente
+    const isDeleted = await this.isNotificationDeleted(notification);
+    if (isDeleted) {
+      return null; // Don't create if user deleted it
+    }
 
     return this.add(notification);
   }
@@ -239,6 +265,97 @@ class NotificationsRepository {
       read: notifications.length - unread,
       byType
     };
+  }
+
+  // Controlla se il modal delle scadenze è già stato mostrato oggi
+  async hasShownExpiringModalToday() {
+    try {
+      const lastShown = localStorage.getItem('subscriptio_last_expiring_modal_shown');
+      if (!lastShown) return false;
+      
+      const lastShownDate = new Date(lastShown);
+      const today = new Date();
+      
+      // Confronta solo la data (ignora l'ora)
+      return lastShownDate.toDateString() === today.toDateString();
+    } catch (error) {
+      console.error('Errore nel controllo della data del modal:', error);
+      return false;
+    }
+  }
+
+  // Segna che il modal delle scadenze è stato mostrato oggi
+  async markExpiringModalShownToday() {
+    try {
+      localStorage.setItem('subscriptio_last_expiring_modal_shown', new Date().toISOString());
+      return true;
+    } catch (error) {
+      console.error('Errore nel salvataggio della data del modal:', error);
+      return false;
+    }
+  }
+
+  // Aggiungi una notifica alla lista di quelle eliminate dall'utente
+  async addToDeletedNotifications(notification) {
+    try {
+      const deletedKey = 'subscriptio_deleted_notifications';
+      const deleted = JSON.parse(localStorage.getItem(deletedKey) || '[]');
+      
+      // Aggiungi un identificatore unico basato su tipo, subscriptionId e data
+      const deletedId = this.getNotificationUniqueId(notification);
+      
+      if (!deleted.includes(deletedId)) {
+        deleted.push(deletedId);
+        localStorage.setItem(deletedKey, JSON.stringify(deleted));
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Errore nell\'aggiunta alla lista delle notifiche eliminate:', error);
+      return false;
+    }
+  }
+
+  // Controlla se una notifica è stata eliminata dall'utente
+  async isNotificationDeleted(notification) {
+    try {
+      const deletedKey = 'subscriptio_deleted_notifications';
+      const deleted = JSON.parse(localStorage.getItem(deletedKey) || '[]');
+      const deletedId = this.getNotificationUniqueId(notification);
+      
+      return deleted.includes(deletedId);
+    } catch (error) {
+      console.error('Errore nel controllo delle notifiche eliminate:', error);
+      return false;
+    }
+  }
+
+  // Genera un ID unico per una notifica basato su tipo, subscriptionId e data
+  getNotificationUniqueId(notification) {
+    const baseId = `${notification.type}_${notification.subscriptionId}`;
+    
+    if (notification.type === 'subscription_expiring') {
+      return `${baseId}_${notification.renewalDate}`;
+    } else if (notification.type === 'payment_due') {
+      return `${baseId}_${notification.dueDate}`;
+    }
+    
+    return baseId;
+  }
+
+  // Pulisci le notifiche eliminate vecchie (più di 30 giorni)
+  async cleanOldDeletedNotifications() {
+    try {
+      const deletedKey = 'subscriptio_deleted_notifications';
+      const deleted = JSON.parse(localStorage.getItem(deletedKey) || '[]');
+      
+      // Per ora manteniamo tutte le notifiche eliminate
+      // In futuro si potrebbe implementare una logica per rimuovere quelle vecchie
+      return true;
+    } catch (error) {
+      console.error('Errore nella pulizia delle notifiche eliminate:', error);
+      return false;
+    }
   }
 }
 

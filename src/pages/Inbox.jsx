@@ -144,7 +144,7 @@ const InboxPage = ({ notifications = [], onNotificationClick, onMarkAsRead, onMa
                 onClick={handleBulkDelete}
                 variant="danger"
                 size="sm"
-                className="bg-black hover:bg-gray-800"
+                className="bg-black hover:bg-[rgb(25,25,25)]"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Elimina
@@ -176,7 +176,7 @@ const InboxPage = ({ notifications = [], onNotificationClick, onMarkAsRead, onMa
               >
                 <div 
                   className={`flex items-center justify-between p-3 rounded-2xl transition-all duration-200 ${
-                    !notification.read ? 'bg-gray-50 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800'
+                    !notification.read ? 'bg-gray-50 dark:bg-[rgb(34,34,34)]' : 'bg-gray-50 dark:bg-[rgb(34,34,34)]'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -194,7 +194,7 @@ const InboxPage = ({ notifications = [], onNotificationClick, onMarkAsRead, onMa
                       onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex items-center space-x-2">
-                        <p className={`text-gray-900 dark:text-gray-100 ${
+                        <p className={`text-[rgb(34,34,34)] dark:text-gray-100 ${
                           !notification.read ? 'font-bold' : 'font-medium'
                         }`}>
                           {notification.title}
